@@ -373,12 +373,6 @@ on post-fs-data
 
 # enable touch boost
     write /sys/touchscreen/touch_boost 1
-    
-# CM7 touchscreen fix (waleedq)
-    write /sys/touchscreen/set_touchscreen 7032
-    write /sys/touchscreen/set_noise 4027
-    write /sys/touchscreen/set_acquisition 4000
-    exec /system/bin/cat /sys/touchscreen/set_write
  	
 # permission for touchscreen
     chown system system /sys/touchscreen/bootcomplete
@@ -429,6 +423,9 @@ on boot
 
 # Increase readahead buffers on MMC devices
     write /sys/block/mmcblk0/bdi/read_ahead_kb 1024
+
+# Touchscreen: bootcomplete
+    write /sys/touchscreen/bootcomplete 1
 
 # 3D init
 service pvrsrvinit /system/bin/pvrsrvinit
