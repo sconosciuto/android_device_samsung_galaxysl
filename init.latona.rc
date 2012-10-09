@@ -46,7 +46,7 @@ on early-init
 
 on fs
     mount ext4 /dev/block/stl9 /system
-    #mount ext4 /dev/block/stl9 /system ro remount
+    mount ext4 /dev/block/stl9 /system ro remount
 
     mount ext4 /dev/block/stl11 /cache
 
