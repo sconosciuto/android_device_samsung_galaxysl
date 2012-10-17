@@ -133,9 +133,7 @@ public:
     void * GrabRecordFrame (int& index);
     void ReleaseRecordFrame (int index);
     void GrabRawFrame(void *previewBuffer, unsigned int width, unsigned int height);
-    camera_memory_t* GrabJpegFrame (camera_request_memory mRequestMemory,unsigned long& mfilesize,bool IsFrontCam);
-    camera_memory_t* CreateJpegFromBuffer(void *rawBuffer, camera_request_memory mRequestMemory);
-    unsigned long savePicture(unsigned char *inputBuffer, unsigned char *& output);
+    camera_memory_t* GrabJpegFrame (camera_request_memory mRequestMemory,int& mfilesize,bool IsFrontCam);
     void convert(unsigned char *buf, unsigned char *rgb, int width, int height);
 
 private:
@@ -159,7 +157,6 @@ private:
     int nQueued;
     int nDequeued;
 
-    unsigned long saveYUYVtoJPEG (unsigned char *inputBuffer, int width, int height, unsigned char *& outbuffer, int quality);
 enum AE_AWB_LOCK_UNLOCK
 {
 AE_UNLOCK_AWB_UNLOCK = 0,

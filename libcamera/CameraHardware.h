@@ -45,7 +45,6 @@
 #include <hardware/gralloc.h>
 #include <sys/ioctl.h>
 
-#include <jpeglib.h>
 #include "V4L2Camera.h"
 
 #include <math.h>
@@ -272,7 +271,7 @@ extern "C" {
 int ColorConvert_Init(int , int , int);
 int ColorConvert_Deinit();
 int ColorConvert_Process(char *, char *);
-
+int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, int quality);
 void Neon_Convert_yuv422_to_NV21(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
 void Neon_Convert_yuv422_to_NV12(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
 void Neon_Convert_yuv422_to_YUV420P(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);

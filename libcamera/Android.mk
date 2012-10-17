@@ -3,20 +3,20 @@ include $(all-subdir-makefiles)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES:= \
-	CameraHal_Module.cpp \
-        V4L2Camera.cpp \
-        CameraHardware.cpp \
-        converter.cpp \
-	ExifCreator.cpp \
+    CameraHal_Module.cpp \
+    V4L2Camera.cpp \
+    CameraHardware.cpp \
+    converter.cpp \
+    ExifCreator.cpp \
+    JpegEncoder.c
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../include/ \
-    frameworks/base/include/ui \
-    frameworks/base/include/utils \
-    frameworks/base/include/media/stagefright \
-    frameworks/base/include/media/stagefright/openmax \
-    external/jpeg \
-    external/jhead
+    hardware/ti/omap3/dspbridge/inc \
+    hardware/ti/omap3/omx/system/src/openmax_il/lcml/inc \
+    hardware/ti/omap3/omx/system/src/openmax_il/omx_core/inc \
+    hardware/ti/omap3/omx/system/src/openmax_il/common/inc \
+    hardware/ti/omap3/omx/image/src/openmax_il/jpeg_enc/inc \
 
 LOCAL_SHARED_LIBRARIES:= \
     libui \
@@ -25,8 +25,10 @@ LOCAL_SHARED_LIBRARIES:= \
     libcutils \
     libcamera_client \
     libhardware \
-    libjpeg \
-    libexif
+    libexif \
+    libOMX_Core \
+
+LOCAL_CFLAGS := -Wall -fpic -pipe -O0 -DOMX_DEBUG=1
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE:= camera.$(TARGET_BOOTLOADER_BOARD_NAME)

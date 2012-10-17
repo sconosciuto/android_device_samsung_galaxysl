@@ -33,13 +33,6 @@
 
 extern int version;
 
-extern "C" {
-    #include <jpeglib.h>
-}
-
-
-
-
 #define MEDIA_DEVICE "/dev/media0"
 #define ENTITY_VIDEO_CCDC_OUT_NAME      "OMAP3 ISP CCDC output"
 #define ENTITY_CCDC_NAME                "OMAP3 ISP CCDC"
@@ -107,93 +100,6 @@ V4L2Camera::~V4L2Camera()
     free(videoIn);
     free(mediaIn);
 }
-
-typedef struct {
-struct jpeg_destination_mgr pub; /* public fields */
-
-unsigned char ** outbuffer; /* target buffer */
-unsigned long * outsize;
-unsigned char * newbuffer; /* newly allocated buffer */
-JOCTET * buffer; /* start of buffer */
-size_t bufsize;
-} my_mem_destination_mgr;
-
-typedef my_mem_destination_mgr * my_mem_dest_ptr;
-/* Expanded data destination object for memory output */
-
-void
-init_mem_destination (j_compress_ptr cinfo)
-{
-/* no work necessary here */
-}
-
-boolean
-empty_mem_output_buffer (j_compress_ptr cinfo)
-{
-size_t nextsize;
-JOCTET * nextbuffer;
-my_mem_dest_ptr dest = (my_mem_dest_ptr) cinfo->dest;
-
-/* Try to allocate new buffer with double size */
-nextsize = dest->bufsize * 2;
-nextbuffer = (JOCTET *)malloc(nextsize);
-
-memcpy(nextbuffer, dest->buffer, dest->bufsize);
-
-if (dest->newbuffer != NULL)
-free(dest->newbuffer);
-
-dest->newbuffer = nextbuffer;
-
-dest->pub.next_output_byte = nextbuffer + dest->bufsize;
-dest->pub.free_in_buffer = dest->bufsize;
-
-dest->buffer = nextbuffer;
-dest->bufsize = nextsize;
-
-return TRUE;
-}
-
-void term_mem_destination (j_compress_ptr cinfo)
-{
-my_mem_dest_ptr dest = (my_mem_dest_ptr) cinfo->dest;
-
-*dest->outbuffer = dest->buffer;
-*dest->outsize = dest->bufsize - dest->pub.free_in_buffer;
-}
-
-void jpeg_mem_dest (j_compress_ptr cinfo,
-unsigned char ** outbuffer, unsigned long * outsize)
-{
-my_mem_dest_ptr dest;
-
-/* The destination object is made permanent so that multiple JPEG images
-* can be written to the same buffer without re-executing jpeg_mem_dest.
-*/
-if (cinfo->dest == NULL) { /* first time for this JPEG object? */
-cinfo->dest = (struct jpeg_destination_mgr *)
-(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-sizeof(my_mem_destination_mgr));
-}
-
-dest = (my_mem_dest_ptr) cinfo->dest;
-dest->pub.init_destination = init_mem_destination;
-dest->pub.empty_output_buffer = empty_mem_output_buffer;
-dest->pub.term_destination = term_mem_destination;
-dest->outbuffer = outbuffer;
-dest->outsize = outsize;
-dest->newbuffer = NULL;
-
-if (*outbuffer == NULL || *outsize == 0) {
-/* Allocate initial buffer */
-dest->newbuffer = *outbuffer = (unsigned char*)malloc(OUTPUT_BUF_SIZE);
-*outsize = OUTPUT_BUF_SIZE;
-}
-
-dest->pub.next_output_byte = dest->buffer = *outbuffer;
-dest->pub.free_in_buffer = dest->bufsize = *outsize;
-}
-//*******************************************************************************************
 
 int V4L2Camera::Open(const char *device)
 {
@@ -798,16 +704,7 @@ void V4L2Camera::GrabRawFrame(void *previewBuffer,unsigned int width, unsigned i
     nQueued++;
 }
 
-unsigned long
-V4L2Camera::savePicture(unsigned char *inputBuffer, unsigned char *& output)
-{
-    unsigned long fileSize=100;
-    int ret;
-    fileSize = saveYUYVtoJPEG(inputBuffer, videoIn->width, videoIn->height, output, 95);
-    return fileSize;
-}
-
-camera_memory_t* V4L2Camera::GrabJpegFrame (camera_request_memory mRequestMemory,unsigned long& mfilesize,bool IsFrontCam)
+camera_memory_t* V4L2Camera::GrabJpegFrame (camera_request_memory mRequestMemory,int& mfilesize,bool IsFrontCam)
 {
     unsigned char * outputBuffer;
     unsigned long fileSize=0;
@@ -818,7 +715,7 @@ camera_memory_t* V4L2Camera::GrabJpegFrame (camera_request_memory mRequestMemory
     videoIn->buf.memory = V4L2_MEMORY_MMAP;
 
     do{
-	        ALOGD("GrabJpegFrame - Dequeue buffer");
+	        ALOGV("GrabJpegFrame - Dequeue buffer");
 		/* Dequeue buffer */
 		ret = ioctl(camHandle, VIDIOC_DQBUF, &videoIn->buf);
 		if (ret < 0) {
@@ -830,11 +727,11 @@ camera_memory_t* V4L2Camera::GrabJpegFrame (camera_request_memory mRequestMemory
 		//Latona Front Camera doesn't support Image Processing. Manually Encode the JPEG
 		if(IsFrontCam)		
 		{	
-			ALOGD("YUVU Format - savePicture");
-			fileSize = savePicture((unsigned char *)videoIn->mem[videoIn->buf.index], outputBuffer);
+			ALOGV("YUVU Format");
+			fileSize =  videoIn->width * videoIn->height * 2;
 		}
 
-		ALOGD("GrabJpegFrame - Enqueue buffer");
+		ALOGV("GrabJpegFrame - Enqueue buffer");
 
 		/* Enqueue buffer */
 		ret = ioctl(camHandle, VIDIOC_QBUF, &videoIn->buf);
@@ -844,17 +741,13 @@ camera_memory_t* V4L2Camera::GrabJpegFrame (camera_request_memory mRequestMemory
 		}
 		nQueued++;
 
-		if(IsFrontCam)
+		if(!IsFrontCam)
 		{	
-			picture = mRequestMemory(-1,fileSize,1,NULL);
-			picture->data=outputBuffer;
-    			mfilesize=fileSize;
-		}else{
 			fileSize=GetJpegImageSize();
-			picture = mRequestMemory(-1,fileSize,1,NULL);
-			picture->data=(unsigned char *)videoIn->mem[videoIn->buf.index];
-			mfilesize=fileSize;
 		}
+		picture = mRequestMemory(-1,fileSize,1,NULL);
+		picture->data=(unsigned char *)videoIn->mem[videoIn->buf.index];
+		mfilesize=fileSize;
 		break;
     }while(0);
 
@@ -956,109 +849,6 @@ void V4L2Camera::getExifInfoFromDriver(v4l2_exif* exifobj)
 	{
 		ALOGE ("Failed to get vidioc_g_exif.\n");
 	}
-}
-
-camera_memory_t* V4L2Camera::CreateJpegFromBuffer(void *rawBuffer, camera_request_memory mRequestMemory)
-{
-    unsigned long fileSize;
-    int ret;
-    camera_memory_t* picture = NULL;
-    unsigned char * outputBuffer=NULL;
-
-    do{
-	    ALOGV("savePicture");
-	    fileSize = savePicture((unsigned char *)videoIn->mem[videoIn->buf.index], outputBuffer);
-
-		picture = mRequestMemory(-1,fileSize,1,NULL);
-		picture->data = outputBuffer;
-	break;
-    }while(0);
-
-    return picture;
-}
-
-unsigned long V4L2Camera::saveYUYVtoJPEG (unsigned char *inputBuffer, int width, int height, unsigned char *& outbuffer, int quality)
-{
-    struct jpeg_compress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-    JSAMPROW row_pointer[1];
-    unsigned char *line_buffer, *yuyv;
-    int z;
-    unsigned long fileSize;
-
-    line_buffer = (unsigned char *) calloc (width * 3, 1);
-    yuyv = inputBuffer;
-
-    cinfo.err = jpeg_std_error (&jerr);
-    jpeg_create_compress (&cinfo);
-    
-
-    jpeg_mem_dest (&cinfo,&outbuffer,&fileSize);
-
-    cinfo.image_width = width;
-    cinfo.image_height = height;
-    cinfo.input_components = 3;
-    cinfo.in_color_space = JCS_RGB;
-
-    jpeg_set_defaults (&cinfo);
-    jpeg_set_quality (&cinfo, quality, TRUE);
-
-    jpeg_start_compress (&cinfo, TRUE);
-
-    z = 0;
-    while (cinfo.next_scanline < cinfo.image_height) {
-        int x;
-        unsigned char *ptr = line_buffer;
-
-        for (x = 0; x < width; x++) {
-            int r, g, b;
-            int y, u, v;
-
-			//if(version >= KERNEL_VERSION(2,6,37))
-			//{
-				if (!z)
-					y = yuyv[1] << 8;
-				else
-					y = yuyv[3] << 8;
-
-				u = yuyv[0] - 128;
-				v = yuyv[2] - 128;
-			/*}
-			else
-			{
-				if (!z)
-					y = yuyv[0] << 8;
-				else
-				y = yuyv[2] << 8;
-
-				u = yuyv[1] - 128;
-				v = yuyv[3] - 128;
-			}*/
-            r = (y + (359 * v)) >> 8;
-            g = (y - (88 * u) - (183 * v)) >> 8;
-            b = (y + (454 * u)) >> 8;
-
-            *(ptr++) = (r > 255) ? 255 : ((r < 0) ? 0 : r);
-            *(ptr++) = (g > 255) ? 255 : ((g < 0) ? 0 : g);
-            *(ptr++) = (b > 255) ? 255 : ((b < 0) ? 0 : b);
-
-            if (z++) {
-                z = 0;
-                yuyv += 4;
-            }
-        }
-
-        row_pointer[0] = line_buffer;
-        jpeg_write_scanlines (&cinfo, row_pointer, 1);
-    }
-
-    jpeg_finish_compress (&cinfo);
-    jpeg_destroy_compress (&cinfo);
-
-    free (line_buffer);
-    
-
-    return fileSize;
 }
 
 static inline void yuv_to_rgb16(unsigned char y,

@@ -948,28 +948,37 @@ int CameraHardware::pictureThread()
      //TODO xxx : Optimize the memory capture call. Too many memcpy
      if (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE) {
         ALOGV ("mJpegPictureCallback");
-	unsigned long JpegImageSize;
-	if(mCameraID==CAMERA_FF)
-        	picture = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,true);
-	else
-		picture = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,false);
-	unsigned char* pExifBuf = new unsigned char[65536];
-	int JpegExifSize;
+		int JpegImageSize,JpegExifSize;
+		if(mCameraID == CAMERA_FF)
+			picture = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,true);
+		else
+			picture = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,false);
+		unsigned char* pExifBuf = new unsigned char[65536];
 
         camera_memory_t *ExifHeap = mRequestMemory(-1, EXIF_FILE_SIZE, 1, 0);
 
-	//TODO : dhiru1602- Include EXIF Thumbnail for JPEG Images	
-	CreateExif(NULL,NULL,(unsigned char *)ExifHeap->data,JpegExifSize,1);
+		//TODO : dhiru1602- Include EXIF Thumbnail for JPEG Images
+		CreateExif(NULL,NULL,(unsigned char *)ExifHeap->data,JpegExifSize,1);
 
-            ALOGD("JpegExifSize=%d, JpegImageSize=%d", JpegExifSize,(int)JpegImageSize);
+		if(mCameraID==CAMERA_FF)
+		{
+				  void * outputBuffer;
+				  JpegImageSize = encodeImage(picture->data, //Output Buffer
+										picture->data, // Input Buffer
+										w,	//Image Width
+										h,	//Image Height
+										100); //Quality
+		}
 
-            camera_memory_t *mem = mRequestMemory(-1, (int)JpegImageSize + JpegExifSize, 1, 0);
-            uint8_t *ptr = (uint8_t *) mem->data;
-            memcpy(ptr, picture->data, 2); ptr += 2;
-            memcpy(ptr, ExifHeap->data, JpegExifSize); ptr += JpegExifSize;
-            memcpy(ptr, (uint8_t *) picture->data + 2, (int)JpegImageSize - 2);
+		ALOGD("JpegExifSize=%d, JpegImageSize=%d", JpegExifSize,JpegImageSize);
 
-            mDataCb(CAMERA_MSG_COMPRESSED_IMAGE,mem,0,NULL ,mCallbackCookie);
+		camera_memory_t *mem = mRequestMemory(-1, JpegImageSize + JpegExifSize, 1, 0);
+		uint8_t *ptr = (uint8_t *) mem->data;
+		memcpy(ptr, picture->data, 2); ptr += 2;
+		memcpy(ptr, ExifHeap->data, JpegExifSize); ptr += JpegExifSize;
+		memcpy(ptr, (uint8_t *) picture->data + 2, JpegImageSize - 2);
+
+		mDataCb(CAMERA_MSG_COMPRESSED_IMAGE,mem,0,NULL ,mCallbackCookie);
     }
 
     /* Close operation */
