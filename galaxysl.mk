@@ -149,7 +149,24 @@ PRODUCT_PACKAGES += hwcomposer.default
 PRODUCT_PACKAGES += camera.latona
 
 # OMX stuff
-PRODUCT_PACKAGES += dspexec libOMX_Core
+PRODUCT_PACKAGES += \
+    libLCML \
+    libbridge \
+    cexec.out \
+    libOMX.TI.AAC.decode \
+    libOMX.TI.AAC.encode \
+    libOMX.TI.AMR.decode \
+    libOMX.TI.AMR.encode \
+    libOMX.TI.JPEG.decoder \
+    libOMX.TI.JPEG.encoder \
+    libOMX.TI.MP3.decode \
+    libOMX.TI.Video.Decoder \
+    libOMX.TI.Video.encoder \
+    libOMX.TI.VPP \
+    libOMX.TI.WBAMR.decode \
+    libOMX.TI.WBAMR.encode \
+    libOMX.TI.WMA.decode \
+    libOMX_Core \
 
 # device specific overlays
 DEVICE_PACKAGE_OVERLAYS += device/samsung/galaxysl/overlay
