@@ -8,7 +8,8 @@ LOCAL_SRC_FILES:= \
     CameraHardware.cpp \
     converter.cpp \
     ExifCreator.cpp \
-    JpegEncoder.c
+    JpegEncoder.c \
+    scale.c
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../include/ \
@@ -27,6 +28,7 @@ LOCAL_SHARED_LIBRARIES:= \
     libhardware \
     libexif \
     libOMX_Core \
+    libdl \
 
 LOCAL_CFLAGS := -Wall -fpic -pipe -O0 -DOMX_DEBUG=1
 

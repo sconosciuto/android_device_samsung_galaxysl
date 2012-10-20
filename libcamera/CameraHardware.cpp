@@ -40,6 +40,8 @@
 #define CAMERA_BF 0 //Back Camera
 #define CAMERA_FF 1
 
+#define PIX_YUV422I 0
+
 static const int INITIAL_SKIP_FRAME = 3;
 
 #define CAMHAL_GRALLOC_USAGE GRALLOC_USAGE_HW_TEXTURE | \
@@ -89,7 +91,8 @@ CameraHardware::CameraHardware(int CameraID)
                     mMsgEnabled(0),
                     previewStopped(true),
                     mRecordingEnabled(false),
-                    mSkipFrame(0)
+                    mSkipFrame(0),
+                    isStart_scaler(false)
 {
 	/* create camera */
 	mCamera = new V4L2Camera();
@@ -100,6 +103,10 @@ CameraHardware::CameraHardware(int CameraID)
 	if(CameraID==CAMERA_FF)
 	{
 		mCamera->Open(VIDEO_DEVICE_2);
+		if(scale_init(PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_WIDTH, PREVIEW_HEIGHT, PIX_YUV422I, PIX_YUV422I)<0)
+			ALOGE("Unable to initialize OMX Scaler");
+		else
+			isStart_scaler=true;
 	}else{
 		mCamera->Open(VIDEO_DEVICE_0);
 	}
@@ -130,6 +137,30 @@ CameraHardware::CameraHardware(int CameraID)
     mPreviewRunning = false;
     mPreviewStartDeferred = false;
     mPreviewThread = new PreviewThread(this);
+
+	Neon_Rotate = NULL;
+	neon_args = NULL;
+	pTIrtn = NULL;
+	const char* error;
+
+	//Get the handle of rotation shared library.
+
+	pTIrtn = dlopen("librotation.so", RTLD_LOCAL | RTLD_LAZY);
+	if (!pTIrtn) {
+		ALOGE("Open NEON Rotation Library Failed \n");
+	}
+
+	Neon_Rotate = (NEON_fpo) dlsym(pTIrtn, "Neon_RotateCYCY");
+
+	if ((error = dlerror()) != NULL) {
+		ALOGE("Couldnot find  Neon_RotateCYCY symbol\n");
+		dlclose(pTIrtn);
+		pTIrtn = NULL;
+	}
+	if(!neon_args)
+	{
+		neon_args   = (NEON_FUNCTION_ARGS*)malloc(sizeof(NEON_FUNCTION_ARGS));
+	}
 
 
     /* whether prop "debug.camera.showfps" is enabled or not */
@@ -348,6 +379,16 @@ CameraHardware::~CameraHardware()
 	mCamera->Uninit(0);
 	mCamera->StopStreaming(0);
 	mCamera->Close();
+	if(neon_args)
+	{
+		free((NEON_FUNCTION_ARGS *)neon_args);
+	}
+	if(pTIrtn != NULL)
+	{
+		dlclose(pTIrtn);
+		pTIrtn = NULL;
+		ALOGD("Unloaded NEON Rotation Library");
+	}
     delete mCamera;
     mCamera = 0;
 }
@@ -531,6 +572,8 @@ int CameraHardware::previewThread()
     mParameters.getPreviewSize(&width, &height);
     frame_size = width * height * 1.5;
 
+	int framesize_yuv=width * height * 2;
+
     if (mNativeWindow && mGrallocHal) {
         buffer_handle_t *buf_handle;
         int stride;
@@ -544,9 +587,30 @@ int CameraHardware::previewThread()
                                *buf_handle,
                                GRALLOC_USAGE_SW_WRITE_OFTEN,
                                0, 0, width, height, &vaddr)) {
+		if(mCameraID==CAMERA_FF){
+			camera_memory_t* mScaleHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
+			if(scale_process((void*)tempbuf, PREVIEW_WIDTH, PREVIEW_HEIGHT,(void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1))
+			{
+				ALOGE("scale_process() failed\n");
+			}
+						neon_args->pIn = (uint8_t*)mScaleHeap->data;
+						neon_args->pOut = (uint8_t*)tempbuf;
+						neon_args->width = PREVIEW_HEIGHT;
+						neon_args->height = PREVIEW_WIDTH;
+						neon_args->rotate = NEON_ROT90;
+						int error = 0;
+						if (Neon_Rotate != NULL)
+							error = (*Neon_Rotate)(neon_args);
+						else
+							ALOGE("Rotate Fucntion pointer Null");
 
-	    yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height);
+						if (error < 0) {
+							ALOGE("Error in Rotation 90");
 
+						}
+			mScaleHeap->release(mScaleHeap);
+		}
+			yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height);
             mGrallocHal->unlock(mGrallocHal, *buf_handle);
         }
         else
@@ -567,6 +631,7 @@ callbacks:
 	    Neon_Convert_yuv422_to_NV21((unsigned char *)tempbuf, (unsigned char*)picture->data, width, height);
         }
         mDataCb(CAMERA_MSG_PREVIEW_FRAME, picture, index, NULL, mCallbackCookie);
+		picture->release(picture);
     }
 
     Mutex::Autolock lock(mRecordingLock);
@@ -949,9 +1014,34 @@ int CameraHardware::pictureThread()
      if (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE) {
         ALOGV ("mJpegPictureCallback");
 		int JpegImageSize,JpegExifSize;
-		if(mCameraID == CAMERA_FF)
-			picture = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,true);
-		else
+
+		int framesize_yuv = w * h * 2;
+		camera_memory_t *mScaleHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
+		camera_memory_t *mRawBuffer = mRequestMemory(-1, framesize_yuv, 1, NULL);
+		camera_memory_t *mRotateHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
+
+		if(mCameraID == CAMERA_FF){
+			mRawBuffer = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,true);
+			if(scale_process((void*)mRawBuffer->data, PREVIEW_WIDTH, PREVIEW_HEIGHT,(void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1))
+			{
+				ALOGE("scale_process() failed\n");
+			}
+						neon_args->pIn = (uint8_t*)mScaleHeap->data;
+						neon_args->pOut = (uint8_t*)mRotateHeap->data;
+						neon_args->width = PREVIEW_HEIGHT;
+						neon_args->height = PREVIEW_WIDTH;
+						neon_args->rotate = NEON_ROT90;
+						int error = 0;
+						if (Neon_Rotate != NULL)
+							error = (*Neon_Rotate)(neon_args);
+						else
+							ALOGE("Rotate Fucntion pointer Null");
+
+						if (error < 0) {
+							ALOGE("Error in Rotation 90");
+
+						}
+		}else
 			picture = mCamera->GrabJpegFrame(mRequestMemory,JpegImageSize,false);
 		unsigned char* pExifBuf = new unsigned char[65536];
 
@@ -962,12 +1052,15 @@ int CameraHardware::pictureThread()
 
 		if(mCameraID==CAMERA_FF)
 		{
-				  void * outputBuffer;
+				  picture = mRequestMemory(-1, framesize_yuv, 1, NULL);
 				  JpegImageSize = encodeImage(picture->data, //Output Buffer
-										picture->data, // Input Buffer
-										w,	//Image Width
-										h,	//Image Height
+										mRotateHeap->data, // Input Buffer
+										PREVIEW_WIDTH,	//Image Width
+										PREVIEW_HEIGHT,	//Image Height
 										100); //Quality
+				  mScaleHeap->release(mScaleHeap);
+				  mRawBuffer->release(mRawBuffer);
+				  mRotateHeap->release(mRotateHeap);
 		}
 
 		ALOGD("JpegExifSize=%d, JpegImageSize=%d", JpegExifSize,JpegImageSize);
@@ -979,6 +1072,10 @@ int CameraHardware::pictureThread()
 		memcpy(ptr, (uint8_t *) picture->data + 2, JpegImageSize - 2);
 
 		mDataCb(CAMERA_MSG_COMPRESSED_IMAGE,mem,0,NULL ,mCallbackCookie);
+
+		mem->release(mem);
+		ExifHeap->release(ExifHeap);
+		picture->release(picture);
     }
 
     /* Close operation */
@@ -1314,6 +1411,8 @@ void CameraHardware::release()
         }
     }
 	mCamera->Uninit(0);
+	if((mCameraID==CAMERA_FF)&&(isStart_scaler))
+		int err = scale_deinit();
 	mCamera->Close();
 }
 

@@ -44,12 +44,15 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 #include <sys/ioctl.h>
+#include <dlfcn.h>
 
 #include "V4L2Camera.h"
 
 #include <math.h>
 #include "Exif.h"
 #include "ExifCreator.h"
+
+#include "RotationInterface.h"
 
 namespace android {
 
@@ -185,7 +188,7 @@ private:
     sp<MemoryBase>      mPreviewBuffer;
 	sp<MemoryHeapBase>  mRawHeap;      /* format: 422 */
 	sp<MemoryBase>      mRawBuffer;
-    sp<MemoryBase>      mBuffers[kBufferCount];
+    sp<MemoryBase>      mBuffers[kBufferCount];		
     int mRecordBufferState[kBufferCount];
 
     mutable Mutex mSkipFrameLock;
@@ -193,6 +196,10 @@ private:
 
     V4L2Camera         *mCamera;
     int                 mPreviewFrameSize;
+	
+	NEON_fpo Neon_Rotate;
+	NEON_FUNCTION_ARGS* neon_args;
+	void* pTIrtn;
 
 	int mPreviewWidth;
 	int mPreviewHeight;
@@ -257,6 +264,7 @@ private:
 			int mPreviousSaturation;
 			int mPreviousSharpness;
 			int mPreviousMetering;
+			bool isStart_scaler;
     static gralloc_module_t const* mGrallocHal;
 };
 
@@ -276,5 +284,10 @@ void Neon_Convert_yuv422_to_NV21(unsigned char * aSrcBufPtr, unsigned char * aDs
 void Neon_Convert_yuv422_to_NV12(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
 void Neon_Convert_yuv422_to_YUV420P(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
 void UYVYToI420(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
+}
+extern "C" {
+int scale_init(int inWidth, int inHeight, int outWidth, int outHeight, int inFmt, int outFmt);
+int scale_deinit();
+int scale_process(void* inBuffer, int inWidth, int inHeight, void* outBuffer, int outWidth, int outHeight, int rotation, int fmt, float zoom);
 }
 #endif
