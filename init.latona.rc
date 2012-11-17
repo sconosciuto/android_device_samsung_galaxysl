@@ -46,16 +46,16 @@ on early-init
 
 on fs
     mount ext4 /dev/block/stl9 /system
-    mount ext4 /dev/block/stl9 /system ro remount
+    mount ext4 /dev/block/stl9 /system ro remount nodev
 
-    mount ext4 /dev/block/stl11 /cache
+    mount ext4 /dev/block/stl11 /cache nosuid nodev noatime noauto_da_alloc
 
-    mount ext4 /dev/block/mmcblk0p3 /data
+    mount ext4 /dev/block/mmcblk0p3 /data nosuid nodev noatime noauto_da_alloc
 
     # download cache
     mkdir /data/download 0770 system cache
 
-    mount ext4 /dev/block/stl10 /dbdata
+    mount ext4 /dev/block/stl10 /dbdata nosuid nodev noatime noauto_da_alloc
     chown system system /dbdata
     chmod 0771 /dbdata
 
