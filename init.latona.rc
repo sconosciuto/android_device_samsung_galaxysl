@@ -400,6 +400,9 @@ on post-fs-data
     chown system system /sys/devices/platform/android_usb/tethering    
     chown system system /sys/devices/platform/i2c_omap.1/i2c-1/1-0048/twl4030_usb/vbus
 
+# FSync
+    chown system system /sys/module/sync/parameters/fsync_enabled
+
 on boot
     # to enable wifi - for TIWLAN
     setprop wifi.interface "tiwlan0"
