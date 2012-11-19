@@ -126,6 +126,7 @@ PRODUCT_COPY_FILES += \
 # Packages
 PRODUCT_PACKAGES := \
     lights.latona \
+    sensors.latona \
     com.android.future.usb.accessory \
     bdaddr_read \
     utility_make_ext4fs \
