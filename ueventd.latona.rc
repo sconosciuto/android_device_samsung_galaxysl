@@ -21,3 +21,4 @@
 /dev/ion		0777	system		system
 /dev/dsscomp		0666	system		system
 /dev/tiler		0666	system		system
+/dev/hci_tty		0600	bluetooth	bluetooth

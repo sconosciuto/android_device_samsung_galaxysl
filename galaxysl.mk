@@ -119,6 +119,8 @@ PRODUCT_PACKAGES := \
     power.latona \
     com.android.future.usb.accessory \
     bdaddr_read \
+    uim-sysfs \
+    libbt-vendor \
     bootmenu_busybox \
     SamsungServiceMode \
     hostapd.conf \
@@ -137,7 +139,6 @@ PRODUCT_PACKAGES += \
 
 # ICS sound
 PRODUCT_PACKAGES += \
-	hcitool hciattach hcidump \
 	libaudioutils audio.a2dp.default \
 	libaudiohw_legacy audio.primary.omap3 audio.usb.default
 
@@ -205,7 +206,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
 PRODUCT_PROPERTY_OVERRIDES += \
        wifi.interface=wlan0 \
        wifi.supplicant_scan_interval=180 \
-       ro.telephony.ril_class=SamsungRIL \
+       ro.telephony.ril_class=SamsungExynos3RIL \
        ro.telephony.ril.v3=icccardstatus,datacall,signalstrength,facilitylock \
        ro.telephony.call_ring.multiple=false \
        ro.telephony.call_ring.delay=2000 \

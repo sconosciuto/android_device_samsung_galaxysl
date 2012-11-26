@@ -9,9 +9,8 @@ on early-init
     export DEFAULT_BASEIMAGE /system/lib/dsp/baseimage.dof
     export QOSDYN_FILE /system/lib/dsp/qosdyn_3430.dll64P
 
-    mkdir /storage 0050 system sdcard_r
-    mkdir /storage/sdcard0 0000 system system
-    mkdir /storage/sdcard1 0000 system system
+    mkdir /storage/sdcard0 0000 root root
+    mkdir /storage/sdcard1 0000 root root
     symlink /storage/sdcard0 /sdcard
     symlink /storage/sdcard0 /mnt/sdcard
     symlink /storage/sdcard1 /emmc
@@ -182,10 +181,10 @@ on post-fs-data
 
 # Permissions for bluetooth.
     chmod 0660 /dev/ttyS1
-    chown bluetooth bluetooth /dev/ttyS1
+    chown bluetooth net_bt_stack /dev/ttyS1
     chmod 0660 /sys/class/rfkill/rfkill0/state
-    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
-    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
     write /sys/class/rfkill/rfkill0/state 0
 
 # svnet waketime
@@ -219,6 +218,12 @@ on boot
 # Increase readahead buffers on MMC devices
     write /sys/block/mmcblk0/bdi/read_ahead_kb 1024
 
+service uim /system/bin/uim-sysfs
+    class core
+    user root
+    group media bluetooth
+    oneshot
+
 service store_mac_addr /system/xbin/store-mac-addr.sh
     class core
     disabled
@@ -246,13 +251,6 @@ service bdaddr /system/bin/bdaddr_read
 on property:ril.bt_macaddr=*
     start bdaddr
 
-service hciattach /system/bin/logwrapper /system/bin/hciattach -n /dev/ttyS1 texas 3000000
-    class main
-    # let hciattach drop uid to bluetooth with the right linux capabilities
-    group bluetooth net_bt_admin
-    disabled
-    oneshot
-
 on property:wlan.driver.status=ok
     write /proc/sys/net/ipv6/conf/p2p0/disable_ipv6 1
 
@@ -277,6 +275,16 @@ service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
     oneshot
 
 service iprenew_wlan0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service iprenew_bnep0 /system/bin/dhcpcd -n
     class main
     disabled
     oneshot

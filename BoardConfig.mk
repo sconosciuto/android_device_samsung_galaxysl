@@ -4,6 +4,7 @@
 # Board properties
 TARGET_BOARD_PLATFORM := omap3
 TARGET_BOOTLOADER_BOARD_NAME := latona
+TARGET_ARCH := arm
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH_VARIANT := armv7-a-neon
@@ -65,6 +66,8 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/samsung/galaxysl
 
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
+BOARD_WPAN_DEVICE := true
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/samsung/galaxysl/bluetooth
 
 # Egl
 BOARD_EGL_CFG := device/samsung/galaxysl/egl.cfg
