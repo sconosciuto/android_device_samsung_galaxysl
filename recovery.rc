@@ -14,7 +14,6 @@ on init
     mkdir /system
     mkdir /data
     mkdir /cache
-    mkdir /efs
     mkdir /tmp
     mkdir /datadata
     mkdir /sd-ext
@@ -37,17 +36,6 @@ on early-fs
 
 on fs
     mount tmpfs tmpfs /tmp
-
-# SEC_DMCRYPT for MC_CRYPT_ROOT before apply_disk_policy or apply_sec_devenc_init
-    #chown system system /efs
-    #chown radio radio /efs
-    chown radio system /efs
-    chmod 0771 /efs
-    mount rfs /dev/block/stl3 /efs nosuid nodev check=no
-
-# Device Encryption for SMC driver
-    mkdir /efs/smc-storage 0771 system system
-    chmod 0666 /dev/smodule
 
 on post-fs
     mount rootfs rootfs / rw remount
