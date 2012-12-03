@@ -57,6 +57,9 @@ busybox date >>boot.txt
 busybox rm -fr ramdisk.cpio.gz
 busybox rm -fr ramdisk-recovery.cpio.gz
 
+# needed to create the symlink to /sdcard/storage1
+busybox rmdir /emmc
+
 busybox rm -fr /stage1 /dev/*
 
 exec /init
