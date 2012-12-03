@@ -508,11 +508,11 @@ service iprenew_tiwlan0 /system/bin/dhcpcd -n
     oneshot
 
 # bugreport is triggered by holding down volume down, volume up and power
-service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
-    class main
-    disabled
-    oneshot
-    keycodes 114 115 116
+#service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
+#    class main
+#    disabled
+#    oneshot
+#    keycodes 114 115 116
 
 service orientationd /system/bin/orientationd
     class main
