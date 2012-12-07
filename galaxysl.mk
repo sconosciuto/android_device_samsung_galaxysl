@@ -128,6 +128,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES := \
     lights.latona \
     sensors.latona \
+    power.latona \
     com.android.future.usb.accessory \
     bdaddr_read \
     bootmenu_busybox \
