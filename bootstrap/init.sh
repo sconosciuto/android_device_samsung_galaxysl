@@ -18,6 +18,12 @@ if busybox grep -q bootmode=2 /proc/cmdline || busybox grep -q androidboot.mode=
 
 elif ! busybox test -e /system/build.prop ; then
 	# emergency boot
+
+	while ! busybox test -d /sys/devices/platform/mmci-omap-hs.1/mmc_host/mmc0/mmc0:0001; do
+		echo "Waiting for internal mmc..."
+		busybox sleep 1;
+	done
+
 	make_ext4fs -b 4096 -g 32768 -i 8192 -I 256 -a /cache /dev/block/mmcblk0p2
 	busybox mount -t ext4 /dev/block/mmcblk0p2 /cache
 	busybox mkdir /cache/recovery
