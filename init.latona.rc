@@ -20,15 +20,6 @@ on early-init
     mkdir /debug
     mount debugfs /sys/kernel/debug /sys/kernel/debug
 
-
-    write /proc/sys/kernel/panic_on_oops 1
-    write /proc/sys/kernel/hung_task_timeout_secs 0
-    write /proc/cpu/alignment 4
-    write /proc/sys/kernel/sched_latency_ns 10000000
-    write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
-    write /proc/sys/kernel/sched_compat_yield 1
-    write /proc/sys/kernel/sched_child_runs_first 0
-
 on fs
     mkdir /radio 0775 radio radio
     mkdir /efs 0775 radio radio
@@ -66,27 +57,24 @@ on fs
     insmod /system/lib/modules/yas_ori_kernel_driver.ko
     insmod /system/lib/modules/gp2a.ko
     insmod /system/lib/modules/gps.ko
-    insmod /system/lib/modules/storage.ko
     insmod /system/lib/modules/vibetonz.ko
-    insmod /system/lib/modules/switch_sio.ko
 
 on post-fs
-
     # symlink for SamsungRIL
     symlink /radio/modem.bin /dev/block/bml13
 
 on post-fs-data
 # permission for dvfslock ctrl
-	chown radio system /sys/power/dvfslock_ctrl
-	chmod 0660 /sys/power/dvfslock_ctrl
+    chown radio system /sys/power/dvfslock_ctrl
+    chmod 0660 /sys/power/dvfslock_ctrl
 
 # permission for battery
     chown radio system /sys/class/power_supply/battery/batt_fuelgauge_reset
     chmod 0664 /sys/class/power_supply/battery/batt_fuelgauge_reset
 
 # change permission of ftm_sleep
-	chown system system /sys/power/ftm_sleep
-	chmod 0664 /sys/power/ftm_sleep
+    chown system system /sys/power/ftm_sleep
+    chmod 0664 /sys/power/ftm_sleep
 
 # change permission of pm_debug
     chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_errorgain
@@ -126,19 +114,6 @@ on post-fs-data
 #Permission for Vibration Intensity Setting
     chown system system /sys/vibetonz/pwmvalue_intensity
 
-# change permissions for Camera
-    chown system camera /dev/video5
-    chown system camera /dev/video0
-    chmod 0660 /dev/video5
-    chmod 0660 /dev/video0
-
-#Permission for DspBridge
-    chmod 0666 /dev/DspBridge
-
-# change permissions for Overlay
-    chown system system /dev/video1
-    chmod 0660 /dev/video1
-
 # change permissions for overlay managers and display devices
     chmod 0777 /sys/devices/platform/omapdss/manager0/name
     chmod 0777 /sys/devices/platform/omapdss/manager1/name
@@ -159,17 +134,6 @@ on post-fs-data
     chmod 0777 /sys/devices/platform/omapdss/overlay0/enabled
     chmod 0777 /sys/devices/platform/omapdss/overlay1/enabled
     chmod 0777 /sys/devices/platform/omapdss/overlay2/enabled
-
-# change permissions for Previewer and Resizer
-    chown system system /dev/omap-previewer
-    chown system system /dev/omap-resizer
-    chmod 0660 /dev/omap-previewer
-    chmod 0660 /dev/omap-resizer
-
-    chown system system /dev/video6
-    chown system system /dev/video10
-    chmod 0660 /dev/video6
-    chmod 0660 /dev/video10
 
 # wi-fi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
@@ -261,9 +225,6 @@ on post-fs-data
 
     # change permissions for lcd_power
     chown radio system /sys/class/backlight/omap_bl/device/lcd_power
-    
-    chown radio system /sys/power/dvfslock_ctrl
-    chmod 0660 /sys/power/dvfslock_ctrl
 
 # geomagnetic for rev 0.1 
     chown system input /sys/class/input/input3/enable
@@ -355,11 +316,11 @@ on post-fs-data
     chmod 0660 /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
-    write sys/class/rfkill/rfkill0/state 0
+    write /sys/class/rfkill/rfkill0/state 0
 
 # enable touch boost
     write /sys/touchscreen/touch_boost 1
- 	
+
 # permission for touchscreen
     chown system system /sys/touchscreen/bootcomplete
     chown system system /sys/touchscreen/set_qt_firm_update
