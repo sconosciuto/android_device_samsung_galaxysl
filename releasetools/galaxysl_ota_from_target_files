@@ -36,13 +36,19 @@ import galaxysl_edify_generator as edify_generator
 
 __doc__ = ota_from_target_files.__doc__
 
-
 def CopyBootFiles(input_zip, output_zip):
-  output_zip.write(os.path.join(TARGET_DIR, "boot.img"),"boot.img")
+    output_zip.write(os.path.join(TARGET_DIR, "boot.img"),"boot.img")
+
+def CopyBMLoverMTD(output_zip):
+  """Copy the bml_over_mtd utility and script to the output."""
+  output_zip.write(os.path.join(TARGET_DIR, "modem.bin"),"modem.bin")
   output_zip.write(os.path.join(UTILITIES_DIR, "make_ext4fs"),"make_ext4fs")
   output_zip.write(os.path.join(UTILITIES_DIR, "busybox"),"busybox")
+  output_zip.write(os.path.join(UTILITIES_DIR, "flash_image"),"flash_image")
+  output_zip.write(os.path.join(UTILITIES_DIR, "erase_image"),"erase_image")
+  output_zip.write(os.path.join(UTILITIES_DIR, "bml_over_mtd"),"bml_over_mtd")
+  output_zip.write(os.path.join(TARGET_DIR, "bml_over_mtd.sh"),"bml_over_mtd.sh")
   output_zip.write(os.path.join(TARGET_DIR, "updater.sh"),"updater.sh")
-
 
 def WriteFullOTAPackage(input_zip, output_zip):
   # TODO: how to determine this?  We don't know what version it will
@@ -66,18 +72,18 @@ def WriteFullOTAPackage(input_zip, output_zip):
 
   AppendAssertions(script, input_zip)
   device_specific.FullOTA_Assertions()
+
   if OPTIONS.backuptool:
     script.Mount("/system")
     script.RunBackup("backup")
     script.Unmount("/system")
-
-  script.ShowProgress(0.5, 0)
 
   if OPTIONS.wipe_user_data:
     script.FormatPartition("/data")
 
   script.FormatPartition("/system")
   script.Mount("/system")
+  script.ShowProgress(0.7, 30);
   script.UnpackPackageDir("recovery", "/system")
   script.UnpackPackageDir("system", "/system")
 
@@ -85,20 +91,19 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.MakeSymlinks(symlinks)
 
   Item.GetMetadata(input_zip)
+  script.ShowProgress(0.15, 5)
   Item.Get("system").SetPermissions(script)
-
-  script.ShowProgress(0.2, 0)
 
   if OPTIONS.backuptool:
     script.ShowProgress(0.2, 10)
     script.RunBackup("restore")
 
+  if OPTIONS.modelidcfg:
+    script.RunConfig("")
+
   CopyBootFiles(input_zip, output_zip)
+  CopyBMLoverMTD(output_zip)
 
-  script.ShowProgress(0.2, 10)
-  script.BMLWriteRawImage("boot", "boot.img")
-
-  script.ShowProgress(0.1, 0)
   device_specific.FullOTA_InstallEnd()
 
   if OPTIONS.extra_script is not None:
