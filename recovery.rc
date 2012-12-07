@@ -10,13 +10,10 @@ on init
 
     mkdir /sdcard
     mkdir /emmc
-    mkdir /preload
     mkdir /system
     mkdir /data
     mkdir /cache
     mkdir /tmp
-    mkdir /datadata
-    mkdir /sd-ext
 
     mkdir /mnt 0775 root root
 
@@ -25,14 +22,9 @@ on init
     chmod 0770 /cache/recovery
 
 on early-fs
-
-    #temp
-    chown root root /sbin/fat.format
-    chmod 750 /sbin/fat.format
-
 # change permission on recovery
     chown root root /recovery
-    chmod 0770 /recovery        
+    chmod 0770 /recovery
 
 on fs
     mount tmpfs tmpfs /tmp
@@ -47,7 +39,7 @@ on post-fs
     write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
     write /proc/sys/kernel/sched_compat_yield 1
     write /proc/sys/kernel/sched_child_runs_first 0
-	
+
 on boot
     ifup lo
     hostname localhost
