@@ -62,9 +62,6 @@ TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/usb_mass_storage/lun%d
 # Releasetools
 TARGET_RELEASETOOLS_EXTENSIONS := device/samsung/galaxysl
 
-# Vibrator
-BOARD_HAS_VIBRATOR_IMPLEMENTATION := ../../device/samsung/galaxysl/vibrator/tspdrv.c
-
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 

@@ -41,7 +41,6 @@ on fs
     chown radio radio /radio/modem.bin
     chmod 0664 /radio/modem.bin
 
-    # Vibetonz
     export TMPDIR /data/local/tmp
     symlink /data/local/tmp /tmp
 
@@ -99,8 +98,11 @@ on post-fs-data
 
     chown system system /sys/class/backlight/omap_bl/brightness
 
-#Permission for Vibration Intensity Setting
-    chown system system /sys/vibetonz/pwmvalue_intensity
+# Vibrator
+    chmod 0660 /dev/tspdrv
+    chown root shell /dev/tspdrv
+    chown system system /sys/vibrator/pwmvalue
+    chmod 0660 /sys/vibrator/pwmvalue
 
 # change permissions for overlay managers and display devices
     chmod 0777 /sys/devices/platform/omapdss/manager0/name
