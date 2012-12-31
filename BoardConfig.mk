@@ -38,6 +38,8 @@ BOARD_KERNEL_CMDLINE := console=ttySAC2,115200 consoleblank=0
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_PAGE_SIZE := 4096
 
+TARGET_SPECIFIC_HEADER_PATH := device/samsung/galaxysl/include
+
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/galaxysl/shbootimg.mk
 
 # Inline kernel building config
