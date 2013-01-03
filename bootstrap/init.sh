@@ -1,4 +1,5 @@
 #!/stage1/busybox sh
+_PATH="$PATH"
 export PATH=/stage1
 
 busybox cd /
@@ -19,7 +20,7 @@ if busybox grep -q bootmode=2 /proc/cmdline || busybox grep -q androidboot.mode=
 elif ! busybox test -e /system/build.prop ; then
 	# emergency boot
 
-	while ! busybox test -d /sys/devices/platform/mmci-omap-hs.1/mmc_host/mmc0/mmc0:0001; do
+	while ! busybox test -d /sys/dev/block/179:0; do
 		echo "Waiting for internal mmc..."
 		busybox sleep 1;
 	done
@@ -47,8 +48,8 @@ busybox umount /system
 busybox gunzip -c ${RAMDISK} | busybox cpio -i
 
 if busybox grep -q bootmode=5 /proc/cmdline || busybox grep -q androidboot.mode=usb_charger /proc/cmdline ; then
-    # charging mode
-    busybox cp lpm.rc init.rc
+	# charging mode
+	busybox cp lpm.rc init.rc
 	busybox rm init.latona.rc
 fi
 
@@ -64,4 +65,5 @@ busybox rmdir /emmc
 
 busybox rm -fr /stage1 /dev/*
 
+export PATH="${_PATH}"
 exec /init
