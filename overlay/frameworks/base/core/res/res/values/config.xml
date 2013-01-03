@@ -218,10 +218,6 @@
     <!-- Indicate whether the SD card is accessible without removing the battery. -->
     <bool name="config_batterySdCardAccessibility">true</bool>
 
-    <!-- Boolean indicating if current platform supports quick switch-on/off of
-         Bluetooth Module -->
-    <bool name="config_bluetooth_adapter_quick_switch">false</bool>
-
     <!-- Disable the home key unlock setting -->
     <bool name="config_disableHomeUnlockSetting">false</bool>
     

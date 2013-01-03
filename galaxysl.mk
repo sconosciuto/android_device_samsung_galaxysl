@@ -118,6 +118,7 @@ PRODUCT_PACKAGES := \
     power.latona \
     com.android.future.usb.accessory \
     bdaddr_read \
+    uim-sysfs \
     bootmenu_busybox \
     SamsungServiceMode \
     hostapd.conf \

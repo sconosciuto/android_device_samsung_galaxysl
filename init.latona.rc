@@ -183,7 +183,6 @@ on post-fs-data
     chmod 0660 /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
-    write /sys/class/rfkill/rfkill0/state 0
 
 # svnet waketime
     chown radio system /sys/devices/virtual/net/svnet0/waketime
@@ -216,6 +215,12 @@ on boot
 # Increase readahead buffers on MMC devices
     write /sys/block/mmcblk0/bdi/read_ahead_kb 1024
 
+service uim /system/bin/uim-sysfs
+    class core
+    user root
+    group media bluetooth
+    oneshot
+
 service store_mac_addr /system/xbin/store-mac-addr.sh
     class core
     disabled
@@ -242,13 +247,6 @@ service bdaddr /system/bin/bdaddr_read
 
 on property:init.svc.bootanim=running
     start bdaddr
-
-service hciattach /system/bin/logwrapper /system/bin/hciattach -n /dev/ttyS1 texas 3000000
-    class main
-    # let hciattach drop uid to bluetooth with the right linux capabilities
-    group bluetooth net_bt_admin
-    disabled
-    oneshot
 
 service wpa_supplicant /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -e/data/misc/wifi/entropy.bin
