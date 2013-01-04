@@ -145,23 +145,40 @@ PRODUCT_PACKAGES += camera.latona
 
 # OMX stuff
 PRODUCT_PACKAGES += \
-    libLCML \
+    libstagefrighthw \
     libbridge \
     cexec.out \
-    libOMX.TI.AAC.decode \
-    libOMX.TI.AAC.encode \
-    libOMX.TI.AMR.decode \
-    libOMX.TI.AMR.encode \
-    libOMX.TI.JPEG.decoder \
-    libOMX.TI.JPEG.encoder \
-    libOMX.TI.MP3.decode \
+    libPERF \
+    libOMX_Core \
+    libLCML \
+    libion \
+    libtiutils \
+    libomap_mm_library_jni \
     libOMX.TI.Video.Decoder \
     libOMX.TI.Video.encoder \
-    libOMX.TI.VPP \
     libOMX.TI.WBAMR.decode \
-    libOMX.TI.WBAMR.encode \
+    libOMX.TI.AAC.encode \
+    libOMX.TI.G722.decode \
+    libOMX.TI.MP3.decode \
     libOMX.TI.WMA.decode \
-    libOMX_Core \
+    libOMX.TI.Video.encoder \
+    libOMX.TI.WBAMR.encode \
+    libOMX.TI.G729.encode \
+    libOMX.TI.AAC.decode \
+    libOMX.TI.VPP \
+    libOMX.TI.G711.encode \
+    libOMX.TI.JPEG.encoder \
+    libOMX.TI.G711.decode \
+    libOMX.TI.ILBC.decode \
+    libOMX.TI.ILBC.encode \
+    libOMX.TI.AMR.encode \
+    libOMX.TI.G722.encode \
+    libOMX.TI.JPEG.decoder \
+    libOMX.TI.G726.encode \
+    libOMX.TI.G729.decode \
+    libOMX.TI.Video.Decoder \
+    libOMX.TI.AMR.decode \
+    libOMX.TI.G726.decode
 
 # device specific overlays
 DEVICE_PACKAGE_OVERLAYS += device/samsung/galaxysl/overlay
