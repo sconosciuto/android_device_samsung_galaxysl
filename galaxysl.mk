@@ -24,6 +24,7 @@ PRODUCT_COPY_FILES := \
 PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/init.latona.rc:root/init.latona.rc \
 	device/samsung/galaxysl/init.latona.usb.rc:root/init.latona.usb.rc \
+	device/samsung/galaxysl/fstab.latona:root/fstab.latona \
 	device/samsung/galaxysl/lpm.rc:root/lpm.rc \
 	device/samsung/galaxysl/lpm.rc:recovery/root/lpm.rc \
 	device/samsung/galaxysl/ueventd.latona.rc:root/ueventd.latona.rc \
