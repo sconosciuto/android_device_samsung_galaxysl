@@ -316,9 +316,6 @@ on post-fs-data
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     write /sys/class/rfkill/rfkill0/state 0
 
-# enable touch boost
-    write /sys/touchscreen/touch_boost 1
-
 # permission for touchscreen
     chown system system /sys/touchscreen/bootcomplete
     chown system system /sys/touchscreen/set_qt_firm_update
@@ -330,7 +327,6 @@ on post-fs-data
     chown system system /sys/touchscreen/set_total
     chown system system /sys/touchscreen/set_touchscreen
     chown system system /sys/touchscreen/set_write
-    chown system system /sys/touchscreen/touch_boost
 
 # permissions for MTP device node_temporary permission_will be changed 0660
     chmod 0660 /dev/usb_mtp_gadget 
