@@ -46,6 +46,7 @@ public class DeviceSettings extends FragmentActivity {
     public static final String KEY_FSYNC = "fsync";
     public static final String KEY_BATTERY_WORK_DELAY = "battery_work_delay";
     public static final String KEY_TOUCHSCREEN_DRIVER_FILTER = "touchscreen_driver_filter";
+    public static final String KEY_SVNET_WAKELOCK_TIMEOUT = "svnet_wakelock_timeout";
 
     ViewPager mViewPager;
     TabsAdapter mTabsAdapter;

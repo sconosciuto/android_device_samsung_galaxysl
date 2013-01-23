@@ -32,5 +32,6 @@ public class Startup extends BroadcastReceiver {
         FSync.restore(context);
         BatteryWorkDelay.restore(context);
         CpuBoostFreq.restore(context);
+        SvnetWakelockTimeout.restore(context);
     }
 }
