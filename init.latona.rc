@@ -270,6 +270,9 @@ on post-fs-data
 # Touchscreen driver filter
     chown system system /sys/touchscreen/driver_filter
 
+# svnet waketime
+    chown radio system /sys/devices/virtual/net/svnet0/waketime
+
 on boot
     # to enable wifi - for TIWLAN
     setprop wifi.interface "tiwlan0"
