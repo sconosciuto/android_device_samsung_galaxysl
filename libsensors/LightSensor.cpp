@@ -60,7 +60,7 @@ int LightSensor::setDelay(int32_t handle, int64_t ns)
     fd = open(input_sysfs_path, O_RDWR);
     if (fd >= 0) {
         char buf[80];
-        sprintf(buf, "%lld", ns / 1000000); // nanoseconds -> milliseconds
+        sprintf(buf, "%lld", ns);
         write(fd, buf, strlen(buf)+1);
         close(fd);
         return 0;
