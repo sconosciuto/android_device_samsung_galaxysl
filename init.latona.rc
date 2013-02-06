@@ -224,6 +224,9 @@ on post-fs-data
     # change permissions for lcd_power
     chown radio system /sys/class/backlight/omap_bl/device/lcd_power
 
+# Permissions for battery-monitor work delay
+    chown system system /sys/devices/platform/secBattMonitor/power_supply/battery/work_delay
+
 # geomagnetic for rev 0.1 
     chown system input /sys/class/input/input3/enable
     chown system input /sys/class/input/input3/poll_delay
