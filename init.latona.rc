@@ -142,8 +142,8 @@ on post-fs-data
 # create data/gps for GPS demon
     mkdir /data/gps 771 gps system
     chown gps system /data/gps
-    chown gps root /sys/class/sec/GPS_PWR_EN/value
-    chmod 660 /sys/class/sec/GPS_PWR_EN/value
+    chown gps root /sys/class/gps/GPS_PWR_EN/value
+    chmod 660 /sys/class/gps/GPS_PWR_EN/value
 
 # change permissions for overlay managers and display devices
     chown system system /sys/devices/platform/omapdss/manager0/name
