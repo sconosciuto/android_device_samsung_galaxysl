@@ -134,6 +134,7 @@ on post-fs-data
     insmod /system/lib/modules/cfg80211.ko
     insmod /system/lib/modules/mac80211.ko
     insmod /system/lib/modules/wl12xx.ko
+    start store_mac_addr
 
 # ril-logging
     mkdir /data/log 0775 root root
@@ -305,6 +306,11 @@ on boot
 
 # Touchscreen: bootcomplete
     write /sys/touchscreen/bootcomplete 1
+
+service store_mac_addr /system/xbin/store-mac-addr.sh
+    class core
+    disabled
+    oneshot
 
 # 3D init
 service pvrsrvinit /system/bin/pvrsrvinit
