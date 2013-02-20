@@ -119,6 +119,7 @@ PRODUCT_PACKAGES := \
     bdaddr_read \
     bootmenu_busybox \
     SamsungServiceMode \
+    hostapd.conf \
     DeviceParts
 
 #Filesystem binaries
