@@ -58,7 +58,6 @@ BOARD_HAVE_BLUETOOTH := true
 
 # Egl
 BOARD_EGL_CFG := device/samsung/galaxysl/egl.cfg
-COMMON_GLOBAL_CFLAGS += -DSURFACEFLINGER_FORCE_SCREEN_RELEASE
 USE_OPENGL_RENDERER := true
 
 # TARGET_DISABLE_TRIPLE_BUFFERING can be used to disable triple buffering
