@@ -73,6 +73,13 @@ public class ScreenFragmentActivity extends PreferenceFragment {
                     Integer.toString(sharedPrefs.getInt(DeviceSettings.KEY_TOUCHKEYS_TIMEOUT, 1600)));
             }
         }
+        if (key.compareTo(DeviceSettings.KEY_TOUCHSCREEN_DRIVER_FILTER) == 0) {
+            if(((CheckBoxPreference)preference).isChecked()) {
+                Utils.writeValue("/sys/touchscreen/driver_filter", "0");
+            } else {
+                Utils.writeValue("/sys/touchscreen/driver_filter", "1");
+            }
+        }
         return true;
     }
 

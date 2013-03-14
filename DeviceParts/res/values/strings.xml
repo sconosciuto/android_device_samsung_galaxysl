@@ -19,6 +19,9 @@
     <string name="touchscreen_sensitivity_summary_head">Set touch panel sensitivity</string>
     <string name="touchscreen_sensitivity_seekbar_title">Sensitivity</string>
 
+    <string name="touchscreen_driver_filter_title_head">Disable driver filter</string>
+    <string name="touchscreen_driver_filter_summary_head">The deactivation of the filter makes the screen more wobbly</string>
+
     <!-- Touchkeys -->
     <string name="touchkeys_subcat_title">Touchkeys</string>
     <string name="touchkeys_sensitivity_title_head">Touchkeys sensitivity</string>

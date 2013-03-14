@@ -83,6 +83,11 @@ public class TouchscreenSensitivity extends DialogPreference implements OnClickL
         String value = String.format("%03d", sharedPrefs.getInt(SETTING_KEY, DEFAULT_VALUE));
         Utils.writeValue(FILE_PATH, KEY_VALUE + value);
         applyChanges();
+
+        if(sharedPrefs.getBoolean(DeviceSettings.KEY_TOUCHSCREEN_DRIVER_FILTER, false))
+            Utils.writeValue("/sys/touchscreen/driver_filter", "0");
+        else
+            Utils.writeValue("/sys/touchscreen/driver_filter", "1");
     }
 
     public static boolean isSupported() {
