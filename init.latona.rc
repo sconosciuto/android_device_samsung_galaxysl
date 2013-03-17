@@ -346,6 +346,8 @@ on post-fs-data
 
 # FSync
     chown system system /sys/module/sync/parameters/fsync_enabled
+# Touchscreen driver filter
+    chown system system /sys/touchscreen/driver_filter
 
 on boot
     # to enable wifi - for TIWLAN
