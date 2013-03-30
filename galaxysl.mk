@@ -143,7 +143,7 @@ PRODUCT_PACKAGES += \
 # ICS sound
 PRODUCT_PACKAGES += \
 	hcitool hciattach hcidump \
-	libaudioutils audio.a2dp.default audio_policy.latona \
+	libaudioutils audio.a2dp.default \
 	libaudiohw_legacy audio.primary.omap3 audio.usb.default
 
 PRODUCT_COPY_FILES += \
