@@ -17,6 +17,9 @@
     <string name="touchscreen_sensitivity_summary_head">Imposta la sensibilità del touchscreen</string>
     <string name="touchscreen_sensitivity_seekbar_title">Sensibilità</string>
 
+    <string name="touchscreen_driver_filter_title_head">Disattiva filtro driver</string>
+    <string name="touchscreen_driver_filter_summary_head">La disattivazione del filtro rende lo schermo più traballante</string>
+
     <!-- Touchkeys -->
     <string name="touchkeys_subcat_title">Tasti a sfioramento</string>
     <string name="touchkeys_sensitivity_title_head">Sensibilità tasti</string>
@@ -51,7 +54,7 @@
     <string name="cpu_boost_freq_subcat_title">CPU</string>
     <string name="cpu_boost_freq_title_head">Boost</string>
     <string name="cpu_boost_freq_summary_head">Selezione la frequenza di boost</string>
-    <string name="cpu_boost_freq_notsupported">CPU governor non support</string>
+    <string name="cpu_boost_freq_notsupported">CPU governor non supportato</string>
 
     <!-- FSync -->
     <string name="fsync_subcat_title">FSync</string>
