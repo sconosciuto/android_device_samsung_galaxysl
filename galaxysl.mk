@@ -170,7 +170,9 @@ PRODUCT_PACKAGES += \
     libOMX.TI.WBAMR.decode \
     libOMX.TI.WBAMR.encode \
     libOMX.TI.WMA.decode \
-    libOMX_Core \
+    libOMX_Core
+
+PRODUCT_PACKAGES += hostap
 
 # device specific overlays
 DEVICE_PACKAGE_OVERLAYS += device/samsung/galaxysl/overlay
@@ -226,9 +228,10 @@ include frameworks/native/build/phone-hdpi-512-dalvik-heap.mk
 # PRODUCT_LOCALES expansion must not be a density.
 PRODUCT_AAPT_CONFIG := normal hdpi
 
-# copy wifi module
+# copy wifi modules
 PRODUCT_COPY_FILES += \
-	device/samsung/galaxysl/modules/tiwlan_drv.ko:system/lib/modules/tiwlan_drv.ko
+	device/samsung/galaxysl/modules/tiwlan_drv.ko:system/lib/modules/tiwlan_drv.ko \
+	device/samsung/galaxysl/modules/tiap_drv.ko:system/lib/modules/tiap_drv.ko
 
 # copy the filesystem converter
 PRODUCT_COPY_FILES += \
@@ -241,6 +244,10 @@ PRODUCT_COPY_FILES += \
 # wifi MAC script
 PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/wifimac/fix_mac.sh:system/bin/fix_mac.sh
+
+# hostap wrapper
+PRODUCT_COPY_FILES += \
+	device/samsung/galaxysl/hostap_wrapper.sh:system/bin/hostap_wrapper.sh 
 
 # See comment at the top of this file. This is where the other
 # half of the device-specific product definition file takes care
