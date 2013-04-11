@@ -642,7 +642,7 @@ int CameraHardware::previewThread()
                 }
                 mScaleHeap->release(mScaleHeap);
             }
-            yuv422_to_YV12((unsigned char*)tempbuf, (unsigned char*)vaddr, width, height);
+            yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height, stride);
             mGrallocHal->unlock(mGrallocHal, *buf_handle);
         } else
             ALOGE("%s: could not obtain gralloc buffer", __func__);

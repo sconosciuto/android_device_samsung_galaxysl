@@ -26,9 +26,11 @@ extern int version;
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 
-void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, int height)
+void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, int height, int stride)
 {
         int i, j;
+        int paddingY = stride - width;
+        int paddingC = paddingY / 2;
         uint8_t *src = (uint8_t *)bufsrc;
         uint8_t *src1 = src;
         uint8_t *dst_y = (uint8_t *)bufdest;
@@ -41,12 +43,13 @@ void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, in
             *dst_y++ = src1[3];
             src1 += 4;
             }
+            dst_y += paddingY;
         }
 
         src1 = src + width * 2;		/* next line */
 
         dst_v = dst_y;
-        dst_u = dst_y + width * height / 4;
+        dst_u = dst_y + stride * height / 4;
 
         for (i = 0; i < height; i += 2) {
             for (j = 0; j < width; j += 2) {
@@ -57,6 +60,8 @@ void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, in
             }
             src = src1;
             src1 += width * 2;
+            dst_u += paddingC;
+            dst_v += paddingC;
         }
 }
 
