@@ -555,7 +555,10 @@ int CameraHardware::previewThread()
         showFPS("Preview");
     }
 
-    tempbuf = mCamera->GrabPreviewFrame(index);
+    if (mRecordingEnabled)
+        tempbuf = mCamera->GrabRecordFrame(index);
+    else
+        tempbuf = mCamera->GrabPreviewFrame(index);
 
     mSkipFrameLock.lock();
     if (mSkipFrame > 0) {
@@ -637,11 +640,6 @@ callbacks:
 
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
-        tempbuf=mCamera->GrabRecordFrame(index);
-        if (index < 0) {
-            ALOGE("ERR(%s):Fail on mCamera->GrabRecordFrame()", __func__);
-            return UNKNOWN_ERROR;
-        }
 
         memcpy(mRecordHeap[index]->data,tempbuf,framesize_yuv);
         mRecordBufferState[index] = 1;
