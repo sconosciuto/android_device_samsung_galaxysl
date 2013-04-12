@@ -564,6 +564,10 @@ int CameraHardware::previewThread()
 
     int framesize_yuv = width * height * 2;
 
+    if (UNLIKELY(mDebugFps)) {
+        showFPS("Preview");
+    }
+
     if (mNativeWindow && mGrallocHal) {
         buffer_handle_t *buf_handle;
         int stride;
