@@ -69,6 +69,8 @@ static int mDebugFps = 0;
 static int mCameraID = 0;
 int version = 0;
 
+static bool skipPreviewFrame = false;
+
 namespace android {
 
 /* 29/12/10 : preview/picture size validation ALOGIc */
@@ -566,6 +568,15 @@ int CameraHardware::previewThread()
 
     if (UNLIKELY(mDebugFps)) {
         showFPS("Preview");
+    }
+
+    if (height > 500) {
+        if (skipPreviewFrame) {
+            skipPreviewFrame = false;
+            goto callbacks;
+        } else {
+            skipPreviewFrame = true;
+        }
     }
 
     if (mNativeWindow && mGrallocHal) {
