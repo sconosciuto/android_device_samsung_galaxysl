@@ -543,10 +543,19 @@ int CameraHardware::previewThread()
     int index;
     nsecs_t timestamp;
     struct addrs *addrs;
+    void *tempbuf;
+    int width, height, frame_size, framesize_yuv;
 
-    void * tempbuf = mCamera->GrabPreviewFrame(index);
+    mParameters.getPreviewSize(&width, &height);
 
-//  LOGV("%s: index %d", __func__, index);
+    frame_size = width * height * 1.5;
+    framesize_yuv = width * height * 2;
+
+    if (UNLIKELY(mDebugFps)) {
+        showFPS("Preview");
+    }
+
+    tempbuf = mCamera->GrabPreviewFrame(index);
 
     mSkipFrameLock.lock();
     if (mSkipFrame > 0) {
@@ -558,17 +567,6 @@ int CameraHardware::previewThread()
     mSkipFrameLock.unlock();
 
     timestamp = systemTime(SYSTEM_TIME_MONOTONIC);
-
-    int width, height, frame_size;
-
-    mParameters.getPreviewSize(&width, &height);
-    frame_size = width * height * 1.5;
-
-    int framesize_yuv = width * height * 2;
-
-    if (UNLIKELY(mDebugFps)) {
-        showFPS("Preview");
-    }
 
     if (height > 500) {
         if (skipPreviewFrame) {
@@ -645,8 +643,7 @@ callbacks:
             return UNKNOWN_ERROR;
         }
 
-        int mRecordFramesize = width * height * 2;
-        memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+        memcpy(mRecordHeap[index]->data,tempbuf,framesize_yuv);
         mRecordBufferState[index] = 1;
 
         // Notify the client of a new frame.
