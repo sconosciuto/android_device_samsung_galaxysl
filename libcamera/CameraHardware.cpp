@@ -70,6 +70,9 @@ static int mCameraID = 0;
 int version = 0;
 
 static bool skipPreviewFrame = false;
+static int processedFrames = 0;
+static int frameToSkipHD;
+static int frameToSkip;
 
 namespace android {
 
@@ -166,6 +169,14 @@ CameraHardware::CameraHardware(int CameraID)
     property_get("debug.camera.showfps", value, "0");
     mDebugFps = atoi(value);
     ALOGD_IF(mDebugFps, "showfps enabled");
+
+    property_get("camera.720.fps", value, "8");
+    frameToSkipHD = atoi(value);
+    ALOGI("720p frames to skip: %d", frameToSkipHD);
+
+    property_get("camera.480.fps", value, "2");
+    frameToSkip = atoi(value);
+    ALOGI("480p frames to skip: %d", frameToSkip);
 }
 
 void CameraHardware::initDefaultParameters(int CameraID)
@@ -555,10 +566,34 @@ int CameraHardware::previewThread()
         showFPS("Preview");
     }
 
-    if (mRecordingEnabled)
+    if (mRecordingEnabled) {
         tempbuf = mCamera->GrabRecordFrame(index);
-    else
+
+        if (height > 500)
+            frameToSkip = frameToSkipHD;
+        else
+            frameToSkip = frameToSkip;
+
+        //lower preview framerate while recording
+        if (processedFrames < frameToSkip) {
+            processedFrames++;
+            goto callbacks;
+        } else {
+            processedFrames = 0;
+        }
+    } else {
         tempbuf = mCamera->GrabPreviewFrame(index);
+
+        //Half preview framerate for 720p
+        if (height > 500) {
+            if (skipPreviewFrame) {
+                skipPreviewFrame = false;
+                goto callbacks;
+            } else {
+                skipPreviewFrame = true;
+            }
+        }
+    }
 
     mSkipFrameLock.lock();
     if (mSkipFrame > 0) {
@@ -570,15 +605,6 @@ int CameraHardware::previewThread()
     mSkipFrameLock.unlock();
 
     timestamp = systemTime(SYSTEM_TIME_MONOTONIC);
-
-    if (height > 500) {
-        if (skipPreviewFrame) {
-            skipPreviewFrame = false;
-            goto callbacks;
-        } else {
-            skipPreviewFrame = true;
-        }
-    }
 
     if (mNativeWindow && mGrallocHal) {
         buffer_handle_t *buf_handle;
@@ -806,6 +832,9 @@ status_t CameraHardware::startRecording()
 
     //Skip the first recording frame since it is often garbled
     setSkipFrame(1);
+
+    processedFrames = 0;
+    skipPreviewFrame = false;
 
     mRecordingEnabled = true;
     return NO_ERROR;
