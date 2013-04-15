@@ -189,7 +189,7 @@ private:
 	sp<MemoryHeapBase>  mRawHeap;      /* format: 422 */
 	sp<MemoryBase>      mRawBuffer;
     sp<MemoryBase>      mBuffers[kBufferCount];		
-    int mRecordBufferState[kBufferCount];
+    //int mRecordBufferState[kBufferCount];
 
     mutable Mutex mSkipFrameLock;
             int mSkipFrame;

@@ -69,14 +69,14 @@ static int mDebugFps = 0;
 static int mCameraID = 0;
 int version = 0;
 
-static bool skipPreviewFrame = false;
 static int processedFrames = 0;
-static int frameToSkipHD;
-static int frameToSkip;
+static int framesToSkipHD;
+static int framesToSkip;
+static int framesToDrop;
 
 namespace android {
 
-/* 29/12/10 : preview/picture size validation ALOGIc */
+/* 29/12/10 : preview/picture size validation logic */
 const char CameraHardware::supportedPictureSizes_ffc [] = "640x480";
 const char CameraHardware::supportedPictureSizes_bfc [] = "2560x1920,2560x1536,2048x1536,2048x1232,1600x1200,1600x960,800x480,640x480";
 const char CameraHardware::supportedPreviewSizes_ffc [] = "640x480,176x144";
@@ -120,7 +120,7 @@ CameraHardware::CameraHardware(int CameraID)
     mNativeWindow = NULL;
     for (int i = 0; i < NB_BUFFER; i++) {
         mRecordHeap[i] = NULL;
-        mRecordBufferState[i] = 0;
+        //mRecordBufferState[i] = 0;
     }
 
     if (!mGrallocHal) {
@@ -171,12 +171,16 @@ CameraHardware::CameraHardware(int CameraID)
     ALOGD_IF(mDebugFps, "showfps enabled");
 
     property_get("camera.720.fps", value, "8");
-    frameToSkipHD = atoi(value);
-    ALOGI("720p frames to skip: %d", frameToSkipHD);
+    framesToSkipHD = atoi(value);
+    ALOGI("720p frames to skip: %d", framesToSkipHD);
 
-    property_get("camera.480.fps", value, "2");
-    frameToSkip = atoi(value);
-    ALOGI("480p frames to skip: %d", frameToSkip);
+    property_get("camera.480.fps", value, "1");
+    framesToSkip = atoi(value);
+    ALOGI("480p frames to skip: %d", framesToSkip);
+
+    property_get("camera.record.drop", value, "40");
+    framesToDrop = atoi(value);
+    ALOGI("Initial frames to drop: %d", framesToDrop);
 }
 
 void CameraHardware::initDefaultParameters(int CameraID)
@@ -556,6 +560,7 @@ int CameraHardware::previewThread()
     struct addrs *addrs;
     void *tempbuf;
     int width, height, frame_size, framesize_yuv;
+    int previewFramesToSkip;
 
     mParameters.getPreviewSize(&width, &height);
 
@@ -566,34 +571,7 @@ int CameraHardware::previewThread()
         showFPS("Preview");
     }
 
-    if (mRecordingEnabled) {
-        tempbuf = mCamera->GrabRecordFrame(index);
-
-        if (height > 500)
-            frameToSkip = frameToSkipHD;
-        else
-            frameToSkip = frameToSkip;
-
-        //lower preview framerate while recording
-        if (processedFrames < frameToSkip) {
-            processedFrames++;
-            goto callbacks;
-        } else {
-            processedFrames = 0;
-        }
-    } else {
-        tempbuf = mCamera->GrabPreviewFrame(index);
-
-        //Half preview framerate for 720p
-        if (height > 500) {
-            if (skipPreviewFrame) {
-                skipPreviewFrame = false;
-                goto callbacks;
-            } else {
-                skipPreviewFrame = true;
-            }
-        }
-    }
+    tempbuf = mCamera->GrabPreviewFrame(index);
 
     mSkipFrameLock.lock();
     if (mSkipFrame > 0) {
@@ -605,6 +583,24 @@ int CameraHardware::previewThread()
     mSkipFrameLock.unlock();
 
     timestamp = systemTime(SYSTEM_TIME_MONOTONIC);
+
+    if (mRecordingEnabled && height > 500) {
+        previewFramesToSkip = framesToSkipHD;
+    }
+    else {
+        // 720p: half preview framerate
+        previewFramesToSkip = 1;
+    }
+
+    if (mRecordingEnabled || height > 500) {
+        // lower preview framerate
+        if (processedFrames < previewFramesToSkip) {
+            processedFrames++;
+            goto callbacks;
+        } else {
+            processedFrames = 0;
+        }
+    }
 
     if (mNativeWindow && mGrallocHal) {
         buffer_handle_t *buf_handle;
@@ -667,14 +663,12 @@ callbacks:
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
 
-        memcpy(mRecordHeap[index]->data,tempbuf,framesize_yuv);
-        mRecordBufferState[index] = 1;
+        memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+        //mRecordBufferState[index] = 1;
 
         // Notify the client of a new frame.
         if (mMsgEnabled & CAMERA_MSG_VIDEO_FRAME) {
             mDataCbTimestamp(timestamp, CAMERA_MSG_VIDEO_FRAME, mRecordHeap[index], 0, mCallbackCookie);
-        } else {
-            mCamera->ReleaseRecordFrame(index);
         }
     }
 
@@ -706,6 +700,8 @@ status_t CameraHardware::startPreview()
     ret = startPreviewInternal();
     if (ret == OK)
         mPreviewCondition.signal();
+
+    processedFrames = 0;
 
     mPreviewLock.unlock();
     return ret;
@@ -826,15 +822,14 @@ status_t CameraHardware::startRecording()
             mRecordHeap[i]->release(mRecordHeap[i]);
             mRecordHeap[i] = 0;
         }
-        mRecordBufferState[i] = 0;
+        //mRecordBufferState[i] = 0;
         mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
     }
 
-    //Skip the first recording frame since it is often garbled
-    setSkipFrame(1);
+    //Skip the first ten recording frames since it is often garbled
+    setSkipFrame(framesToDrop);
 
     processedFrames = 0;
-    skipPreviewFrame = false;
 
     mRecordingEnabled = true;
     return NO_ERROR;
@@ -846,12 +841,12 @@ void CameraHardware::stopRecording()
     ALOGE("stopRecording");
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled) {
-        for (int i = 0; i < NB_BUFFER; i++) {
+        /*for (int i = 0; i < NB_BUFFER; i++) {
             if (mRecordBufferState[i] != 0) {
                 mCamera->ReleaseRecordFrame(i);
                 mRecordBufferState[i] = 0;
             }
-        }
+        }*/
         mRecordingEnabled = false;
     }
 }
@@ -863,12 +858,14 @@ bool CameraHardware::recordingEnabled()
 
 void CameraHardware::releaseRecordingFrame(const void* opaque)
 {
+    return;
+
     int i;
     for (i = 0; i < NB_BUFFER; i++)
         if ((void*)opaque == mRecordHeap[i]->data)
             break;
     mCamera->ReleaseRecordFrame(i);
-    mRecordBufferState[i] = 0;
+    //mRecordBufferState[i] = 0;
 }
 
 // ---------------------------------------------------------------------------
