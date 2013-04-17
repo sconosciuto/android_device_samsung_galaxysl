@@ -684,6 +684,8 @@ callbacks:
 status_t CameraHardware::startPreview()
 {
     int ret = 0;
+    int width, height;
+    int mRecordingFrameSize;
 
     mPreviewLock.lock();
     if (mPreviewRunning) {
@@ -701,6 +703,18 @@ status_t CameraHardware::startPreview()
         mPreviewStartDeferred = true;
         mPreviewLock.unlock();
         return NO_ERROR;
+    }
+
+    mParameters.getPreviewSize(&width, &height);
+    mRecordingFrameSize = width * height * 2;
+
+    for (int i = 0; i < NB_BUFFER; i++) {
+        if (mRecordHeap[i] != NULL) {
+            mRecordHeap[i]->release(mRecordHeap[i]);
+            mRecordHeap[i] = 0;
+        }
+        //mRecordBufferState[i] = 0;
+        mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
     }
 
     ret = startPreviewInternal();
