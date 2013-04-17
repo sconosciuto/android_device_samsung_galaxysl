@@ -76,6 +76,8 @@ static int framesToDrop;
 
 namespace android {
 
+static int buffersQueued = 0;
+
 /* 29/12/10 : preview/picture size validation logic */
 const char CameraHardware::supportedPictureSizes_ffc [] = "640x480";
 const char CameraHardware::supportedPictureSizes_bfc [] = "2560x1920,2560x1536,2048x1536,2048x1232,1600x1200,1600x960,800x480,640x480";
@@ -571,6 +573,11 @@ int CameraHardware::previewThread()
 
     tempbuf = mCamera->GrabPreviewFrame(index);
 
+    if (mRecordingEnabled && buffersQueued > 6) {
+        ALOGE("Buffers queued: %d", buffersQueued);
+        return NO_ERROR;
+    }
+
     mSkipFrameLock.lock();
     if (mSkipFrame > 0) {
         mSkipFrame--;
@@ -662,6 +669,7 @@ callbacks:
     if (mRecordingEnabled == true) {
 
         memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+        buffersQueued++;
         //mRecordBufferState[index] = 1;
 
         // Notify the client of a new frame.
@@ -814,6 +822,7 @@ status_t CameraHardware::startRecording()
     setSkipFrame(framesToDrop);
 
     processedFrames = 0;
+    buffersQueued = 0;
 
     mRecordingEnabled = true;
     return NO_ERROR;
@@ -842,6 +851,7 @@ bool CameraHardware::recordingEnabled()
 
 void CameraHardware::releaseRecordingFrame(const void* opaque)
 {
+    buffersQueued--;
     return;
 
     int i;
