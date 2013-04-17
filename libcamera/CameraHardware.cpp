@@ -491,7 +491,6 @@ bool CameraHardware::validateSize(size_t width, size_t height, const supported_r
 {
     bool ret = false;
     status_t stat = NO_ERROR;
-    unsigned int size;
 
     if (NULL == supRes) {
         ALOGE("Invalid resolutions array passed");
@@ -557,7 +556,6 @@ int CameraHardware::previewThread()
 {
     int index;
     nsecs_t timestamp;
-    struct addrs *addrs;
     void *tempbuf;
     int width, height, frame_size, framesize_yuv;
     int previewFramesToSkip;
@@ -709,7 +707,6 @@ status_t CameraHardware::startPreview()
 
 status_t CameraHardware::startPreviewInternal()
 {
-    int width, height;
     int mHeapSize = 0;
     int ret = 0;
     int fps = mParameters.getPreviewFrameRate();
@@ -866,7 +863,6 @@ int CameraHardware::beginAutoFocusThread(void *cookie)
 
 int CameraHardware::autoFocusThread()
 {
-    int count = 0;
     int af_status = 0;
 
     ALOGV("%s : starting", __func__);
@@ -957,16 +953,8 @@ int CameraHardware::beginPictureThread(void *cookie)
 int CameraHardware::pictureThread()
 {
     unsigned char *frame;
-    int bufferSize;
     int w, h;
     int ret;
-    struct v4l2_buffer buffer;
-    struct v4l2_format format;
-    struct v4l2_buffer cfilledbuffer;
-    struct v4l2_requestbuffers creqbuf;
-    struct v4l2_capability cap;
-    int i;
-    char devnode[12];
     camera_memory_t* picture;
 
     ALOGV("Picture Thread:%d", mMsgEnabled);
@@ -1049,7 +1037,7 @@ int CameraHardware::pictureThread()
         camera_memory_t *ExifHeap = mRequestMemory(-1, EXIF_FILE_SIZE, 1, 0);
 
         //TODO : dhiru1602- Include EXIF Thumbnail for JPEG Images
-        CreateExif(NULL, NULL, (unsigned char*)ExifHeap->data, JpegExifSize, 1);
+        CreateExif(NULL, 0, (unsigned char*)ExifHeap->data, JpegExifSize, 1);
 
         if (mCameraID == CAMERA_FF) {
             picture = mRequestMemory(-1, framesize_yuv, 1, NULL);
@@ -1407,7 +1395,7 @@ void CameraHardware::release()
     }
     mCamera->Uninit(0);
     if ((mCameraID == CAMERA_FF) && (isStart_scaler))
-        int err = scale_deinit();
+        scale_deinit();
     mCamera->Close();
 }
 
@@ -1420,7 +1408,6 @@ void CameraHardware::CreateExif(unsigned char* pInThumbnailData, int Inthumbsize
     ExifCreator* mExifCreator = new ExifCreator();
     unsigned int ExifSize = 0;
     ExifInfoStructure ExifInfo;
-    char ver_date[5] = { NULL, };
     unsigned short tempISO = 0;
     struct v4l2_exif exifobj;
 
@@ -1429,7 +1416,7 @@ void CameraHardware::CreateExif(unsigned char* pInThumbnailData, int Inthumbsize
         mCamera->getExifInfoFromDriver(&exifobj);
     }
 
-    memset(&ExifInfo, NULL, sizeof(ExifInfoStructure));
+    memset(&ExifInfo, 0, sizeof(ExifInfoStructure));
 
     strcpy( (char*)&ExifInfo.maker, "SAMSUNG");
     strcpy( (char*)&ExifInfo.model, "GT-I9003");
