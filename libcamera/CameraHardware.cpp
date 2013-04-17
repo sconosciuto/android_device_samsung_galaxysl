@@ -42,7 +42,7 @@
 
 #define PIX_YUV422I 0
 
-static const int INITIAL_SKIP_FRAME = 3;
+//static const int INITIAL_SKIP_FRAME = 3;
 
 #define CAMHAL_GRALLOC_USAGE GRALLOC_USAGE_HW_TEXTURE | \
                              GRALLOC_USAGE_HW_RENDER | \
@@ -178,7 +178,7 @@ CameraHardware::CameraHardware(int CameraID)
     framesToSkip = atoi(value);
     ALOGI("480p frames to skip: %d", framesToSkip);
 
-    property_get("camera.record.drop", value, "40");
+    property_get("camera.record.drop", value, "15");
     framesToDrop = atoi(value);
     ALOGI("Initial frames to drop: %d", framesToDrop);
 }
@@ -771,7 +771,7 @@ status_t CameraHardware::startPreviewInternal()
         return UNKNOWN_ERROR;
     }
 
-    setSkipFrame(INITIAL_SKIP_FRAME);
+    //setSkipFrame(INITIAL_SKIP_FRAME);
 
     return NO_ERROR;
 }
@@ -813,20 +813,7 @@ status_t CameraHardware::startRecording()
     ALOGE("startRecording");
     Mutex::Autolock lock(mRecordingLock);
 
-    int width, height;
-    mParameters.getPreviewSize(&width, &height);
-    int mRecordingFrameSize = width * height * 2;
-
-    for (int i = 0; i < NB_BUFFER; i++) {
-        if (mRecordHeap[i] != NULL) {
-            mRecordHeap[i]->release(mRecordHeap[i]);
-            mRecordHeap[i] = 0;
-        }
-        //mRecordBufferState[i] = 0;
-        mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
-    }
-
-    //Skip the first ten recording frames since it is often garbled
+    //Skip the first recording frames since it is often garbled
     setSkipFrame(framesToDrop);
 
     processedFrames = 0;
