@@ -622,11 +622,12 @@ int CameraHardware::previewThread()
                                0, 0, width, height, &vaddr)) {
             if (mCameraID == CAMERA_FF) {
                 camera_memory_t* mScaleHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
+                camera_memory_t* mFrameScaled = mRequestMemory(-1, framesize_yuv, 1, NULL);
                 if (scale_process((void*)tempbuf, PREVIEW_WIDTH, PREVIEW_HEIGHT, (void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1)) {
                     ALOGE("scale_process() failed\n");
                 }
                 neon_args->pIn = (uint8_t*)mScaleHeap->data;
-                neon_args->pOut = (uint8_t*)tempbuf;
+                neon_args->pOut = (uint8_t*)mFrameScaled->data;
                 neon_args->width = PREVIEW_HEIGHT;
                 neon_args->height = PREVIEW_WIDTH;
                 neon_args->rotate = NEON_ROT90;
@@ -640,9 +641,12 @@ int CameraHardware::previewThread()
                     ALOGE("Error in Rotation 90");
 
                 }
+                yuv422_to_YV12((unsigned char *)mFrameScaled->data,(unsigned char *)vaddr, width, height, stride);
                 mScaleHeap->release(mScaleHeap);
-            }
-            yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height, stride);
+                mFrameScaled->release(mFrameScaled);
+            } else
+                yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height, stride);
+
             mGrallocHal->unlock(mGrallocHal, *buf_handle);
         } else
             ALOGE("%s: could not obtain gralloc buffer", __func__);
