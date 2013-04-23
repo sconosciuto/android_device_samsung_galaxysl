@@ -125,6 +125,10 @@ CameraHardware::CameraHardware(int CameraID)
         //mRecordBufferState[i] = 0;
     }
 
+    mScaleHeap = NULL;
+    mFrameScale = NULL;
+    mPreviewFrame = NULL;
+
     if (!mGrallocHal) {
         ret = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t**)&mGrallocHal);
         if (ret)
@@ -559,12 +563,11 @@ int CameraHardware::previewThread()
     int index;
     nsecs_t timestamp;
     void *tempbuf;
-    int width, height, frame_size, framesize_yuv;
+    int width, height, framesize_yuv;
     int previewFramesToSkip;
 
     mParameters.getPreviewSize(&width, &height);
 
-    frame_size = width * height * 1.5;
     framesize_yuv = width * height * 2;
 
     if (UNLIKELY(mDebugFps)) {
@@ -621,13 +624,11 @@ int CameraHardware::previewThread()
                                GRALLOC_USAGE_SW_WRITE_OFTEN,
                                0, 0, width, height, &vaddr)) {
             if (mCameraID == CAMERA_FF) {
-                camera_memory_t* mScaleHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
-                camera_memory_t* mFrameScaled = mRequestMemory(-1, framesize_yuv, 1, NULL);
                 if (scale_process((void*)tempbuf, PREVIEW_WIDTH, PREVIEW_HEIGHT, (void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1)) {
                     ALOGE("scale_process() failed\n");
                 }
                 neon_args->pIn = (uint8_t*)mScaleHeap->data;
-                neon_args->pOut = (uint8_t*)mFrameScaled->data;
+                neon_args->pOut = (uint8_t*)mFrameScale->data;
                 neon_args->width = PREVIEW_HEIGHT;
                 neon_args->height = PREVIEW_WIDTH;
                 neon_args->rotate = NEON_ROT90;
@@ -641,9 +642,7 @@ int CameraHardware::previewThread()
                     ALOGE("Error in Rotation 90");
 
                 }
-                yuv422_to_YV12((unsigned char *)mFrameScaled->data,(unsigned char *)vaddr, width, height, stride);
-                mScaleHeap->release(mScaleHeap);
-                mFrameScaled->release(mFrameScaled);
+                yuv422_to_YV12((unsigned char *)mFrameScale->data,(unsigned char *)vaddr, width, height, stride);
             } else
                 yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height, stride);
 
@@ -661,18 +660,21 @@ callbacks:
     // Notify the client of a new frame.
     if (mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
         const char * preview_format = mParameters.getPreviewFormat();
-        camera_memory_t* picture = mRequestMemory(-1, frame_size, 1, NULL);
         if (!strcmp(preview_format, CameraParameters::PIXEL_FORMAT_YUV420SP)) {
-            Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)picture->data, width, height);
+            if (mCameraID == CAMERA_FF)
+                Neon_Convert_yuv422_to_NV21((unsigned char*)mFrameScale->data, (unsigned char*)mPreviewFrame->data, width, height);
+            else
+                Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewFrame->data, width, height);
         }
-        mDataCb(CAMERA_MSG_PREVIEW_FRAME, picture, index, NULL, mCallbackCookie);
-        picture->release(picture);
+        mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewFrame, index, NULL, mCallbackCookie);
     }
 
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
-
-        memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+        if (mCameraID == CAMERA_FF)
+            memcpy(mRecordHeap[index]->data, mFrameScale->data, framesize_yuv);
+        else
+            memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
         buffersQueued++;
         //mRecordBufferState[index] = 1;
 
@@ -690,6 +692,7 @@ status_t CameraHardware::startPreview()
     int ret = 0;
     int width, height;
     int mRecordingFrameSize;
+    int mFrameSize;
 
     mPreviewLock.lock();
     if (mPreviewRunning) {
@@ -711,6 +714,7 @@ status_t CameraHardware::startPreview()
 
     mParameters.getPreviewSize(&width, &height);
     mRecordingFrameSize = width * height * 2;
+    mFrameSize = width * height * 1.5;
 
     for (int i = 0; i < NB_BUFFER; i++) {
         if (mRecordHeap[i] != NULL) {
@@ -720,6 +724,20 @@ status_t CameraHardware::startPreview()
         //mRecordBufferState[i] = 0;
         mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
     }
+
+    if (mCameraID == CAMERA_FF) {
+        if (mScaleHeap != NULL)
+            mScaleHeap->release(mScaleHeap);
+        mScaleHeap = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+
+        if (mFrameScale != NULL)
+            mFrameScale->release(mFrameScale);
+        mFrameScale = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+    }
+
+    if (mPreviewFrame != NULL)
+        mPreviewFrame->release(mPreviewFrame);
+    mPreviewFrame = mRequestMemory(-1, mFrameSize, 1, NULL);
 
     ret = startPreviewInternal();
     if (ret == OK)
@@ -1421,6 +1439,17 @@ void CameraHardware::release()
             mRecordHeap[i] = NULL;
         }
     }
+
+    if (mCameraID == CAMERA_FF) {
+        if (mScaleHeap != NULL)
+            mScaleHeap->release(mScaleHeap);
+        if (mFrameScale != NULL)
+            mFrameScale->release(mFrameScale);
+    }
+
+    if (mPreviewFrame != NULL)
+        mPreviewFrame->release(mPreviewFrame);
+
     mCamera->Uninit(0);
     if ((mCameraID == CAMERA_FF) && (isStart_scaler))
         scale_deinit();

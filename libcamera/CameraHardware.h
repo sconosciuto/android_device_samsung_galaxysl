@@ -177,6 +177,10 @@ private:
     preview_stream_ops_t*  mNativeWindow;
     camera_memory_t     *mRecordHeap[kBufferCount];
 
+    camera_memory_t     *mScaleHeap;
+    camera_memory_t     *mFrameScale;
+    camera_memory_t     *mPreviewFrame;
+
     mutable Mutex       mLock;           // member property lock
     mutable Mutex       mPreviewLock;    // hareware v4l2 operation lock
     Mutex               mRecordingLock;
