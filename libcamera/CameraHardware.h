@@ -75,7 +75,7 @@ public:
     virtual void        disableMsgType(int32_t msgType);
     virtual bool        msgTypeEnabled(int32_t msgType);
 
-    virtual int setPreviewWindow( struct preview_stream_ops *window);
+    virtual status_t setPreviewWindow( struct preview_stream_ops *window);
 
     virtual status_t    startPreview();
     virtual void        stopPreview();

@@ -428,35 +428,60 @@ void CameraHardware::setCallbacks(camera_notify_callback notify_cb,
     return;
 }
 
-int CameraHardware::setPreviewWindow( preview_stream_ops_t *window)
+status_t CameraHardware::setPreviewWindow(preview_stream_ops *w)
 {
-    int err;
+    int min_bufs;
 
-    Mutex::Autolock lock(mLock);
-    if (mNativeWindow)
-        mNativeWindow = NULL;
-    if (window == NULL) {
-        ALOGW("Window is Null");
-        return 0;
+    mNativeWindow = w;
+    ALOGV("%s: mNativeWindow %p", __func__, mNativeWindow);
+
+    if (!w) {
+        ALOGE("preview window is NULL!");
+        return OK;
     }
 
-    int width, height;
-    mParameters.getPreviewSize(&width, &height);
-    mNativeWindow = window;
-    mNativeWindow->set_usage(mNativeWindow, GRALLOC_USAGE_SW_WRITE_OFTEN);
-    mNativeWindow->set_buffers_geometry(
-        mNativeWindow,
-        width,
-        height,
-        HAL_PIXEL_FORMAT_YV12);
-    err = mNativeWindow->set_buffer_count(mNativeWindow, NB_BUFFER);
-    if (err != 0) {
-        ALOGE("native_window_set_buffer_count failed: %s (%d)", strerror(-err), -err);
+    mPreviewLock.lock();
 
-        if (ENODEV == err) {
-            ALOGE("Preview surface abandoned!");
-            mNativeWindow = NULL;
-        }
+    if (mPreviewRunning && !mPreviewStartDeferred) {
+        ALOGI("stop preview (window change)");
+        stopPreviewInternal();
+    }
+
+    if (w->get_min_undequeued_buffer_count(w, &min_bufs)) {
+        ALOGE("%s: could not retrieve min undequeued buffer count", __func__);
+        return INVALID_OPERATION;
+    }
+
+    if (min_bufs >= NB_BUFFER) {
+        ALOGE("%s: min undequeued buffer count %d is too high (expecting at most %d)", __func__,
+             min_bufs, NB_BUFFER - 1);
+    }
+
+    ALOGV("%s: setting buffer count to %d", __func__, NB_BUFFER);
+    if (w->set_buffer_count(w, NB_BUFFER)) {
+        ALOGE("%s: could not set buffer count", __func__);
+        return INVALID_OPERATION;
+    }
+
+    int preview_width;
+    int preview_height;
+    mParameters.getPreviewSize(&preview_width, &preview_height);
+    int hal_pixel_format = HAL_PIXEL_FORMAT_YV12;
+
+    const char *str_preview_format = mParameters.getPreviewFormat();
+    ALOGV("%s: preview format %s", __func__, str_preview_format);
+
+    if (w->set_usage(w, GRALLOC_USAGE_SW_WRITE_OFTEN)) {
+        ALOGE("%s: could not set usage on gralloc buffer", __func__);
+        return INVALID_OPERATION;
+    }
+
+    if (w->set_buffers_geometry(w,
+                                preview_width, preview_height,
+                                hal_pixel_format)) {
+        ALOGE("%s: could not set buffers geometry to %s",
+             __func__, str_preview_format);
+        return INVALID_OPERATION;
     }
 
     if (mPreviewRunning && mPreviewStartDeferred) {
@@ -467,8 +492,9 @@ int CameraHardware::setPreviewWindow( preview_stream_ops_t *window)
             mPreviewCondition.signal();
         }
     }
+    mPreviewLock.unlock();
 
-    return 0;
+    return OK;
 }
 
 void CameraHardware::enableMsgType(int32_t msgType)
