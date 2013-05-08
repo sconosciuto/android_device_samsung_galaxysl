@@ -33,7 +33,7 @@ public class CpuBoostFreq extends ListPreference implements OnPreferenceChangeLi
         this.setOnPreferenceChangeListener(this);
     }
 
-    private static final String FILE = "/sys/devices/system/cpu/cpufreq/ondemand/boostfreq";
+    private static final String FILE = "/sys/devices/system/cpu/cpufreq/ondemandboost/boostfreq";
 
     public static void restore(Context context) {
         if (!isSupported()) {
