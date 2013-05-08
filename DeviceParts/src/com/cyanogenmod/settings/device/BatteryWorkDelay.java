@@ -19,6 +19,7 @@ public class BatteryWorkDelay extends DialogPreference implements OnClickListene
     private static final int DEFAULT_VALUE = 2000;
     private static final int MAX_VALUE = 4000;
     private static final int MIN_VALUE = 0;
+    private static final int TEXT_OFFSET = 1000;
     private static final int STEP_SIZE = 50;
     private static final String SETTING_KEY = DeviceSettings.KEY_BATTERY_WORK_DELAY;
     private static final int TITLE = R.string.battery_delay_seekbar_title;
@@ -46,6 +47,10 @@ public class BatteryWorkDelay extends DialogPreference implements OnClickListene
         TextView title = (TextView) view.findViewById(R.id.seekbar_title);
         title.setText(TITLE);
         SetupButtonClickListeners(view);
+
+        TextView mAdditionalInfo = (TextView)view.findViewById(R.id.seekbar_additional_information);
+        mAdditionalInfo.setText(R.string.seekbar_additional_information_battery);
+        mAdditionalInfo.setVisibility(View.VISIBLE);
     }
 
     private void SetupButtonClickListeners(View view) {
@@ -101,7 +106,7 @@ public class BatteryWorkDelay extends DialogPreference implements OnClickListene
                 mOriginal = MAX_VALUE + STEP_SIZE;
 
             // Set seekbar range
-            mSeekBar.setMax(((MAX_VALUE - MIN_VALUE)/STEP_SIZE) + 1); //+1 for "never turn off"
+            mSeekBar.setMax(((MAX_VALUE - MIN_VALUE)/STEP_SIZE));
             reset();
             mSeekBar.setOnSeekBarChangeListener(this);
         }
@@ -119,10 +124,7 @@ public class BatteryWorkDelay extends DialogPreference implements OnClickListene
             Editor editor = getEditor();
             int value;
 
-            if(mSeekBar.getProgress() == ((MAX_VALUE - MIN_VALUE)/STEP_SIZE) + 1)
-                value = -1;
-            else
-                value = (mSeekBar.getProgress() * STEP_SIZE + MIN_VALUE); // Progress starts from 0, add MIN_VALUE to get the real value
+            value = (mSeekBar.getProgress() * STEP_SIZE + MIN_VALUE); // Progress starts from 0, add MIN_VALUE to get the real value
 
             editor.putInt(SETTING_KEY, value);
             editor.commit();
@@ -145,7 +147,7 @@ public class BatteryWorkDelay extends DialogPreference implements OnClickListene
         }
 
         protected void updateValue(int progress) {
-                mValueDisplay.setText(String.format("%d ms", (int) (progress * STEP_SIZE + MIN_VALUE)));
+                mValueDisplay.setText(String.format("%d ms", (int) (progress * STEP_SIZE + TEXT_OFFSET)));
         }
 
         public void setValue(int value) {

@@ -73,7 +73,10 @@
                 android:layout_centerHorizontal="true"
                 android:visibility="gone"
                 android:textColor="@android:color/tertiary_text_dark"
-                android:layout_below="@+id/seekbar_linearLayout" />
+                android:layout_below="@+id/seekbar_linearLayout"
+                android:gravity="center_horizontal"
+                android:paddingLeft="15dip"
+                android:paddingRight="15dip" />
 
     </RelativeLayout>
 </ScrollView> 

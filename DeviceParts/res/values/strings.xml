@@ -65,8 +65,9 @@
 
     <!-- Battery-monitor work delay -->
     <string name="battery_delay_subcat_title">Battery Monitor</string>
-    <string name="battery_delay_title_head">Delay</string>
-    <string name="battery_delay_summary_head">Adjust the duration of samsung-battery adding a delay</string>
-    <string name="battery_delay_seekbar_title">Additional delay</string>
+    <string name="battery_delay_title_head">WakeLock</string>
+    <string name="battery_delay_summary_head">Adjust the duration of samsung-battery</string>
+    <string name="battery_delay_seekbar_title">WakeLock duration</string>
+    <string name="seekbar_additional_information_battery">Too short intervals could increase the awake time</string>
 
 </resources>

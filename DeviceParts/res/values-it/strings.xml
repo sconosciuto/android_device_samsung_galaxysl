@@ -62,9 +62,10 @@
     <string name="fsync_summary_head">Migliora le prestazioni, ma può causare la corruzione dei dati</string>
 
     <!-- Battery-monitor work delay -->
-    <string name="battery_delay_subcat_title">Controllo batteria</string>
-    <string name="battery_delay_title_head">Ritardo</string>
-    <string name="battery_delay_summary_head">Modifica la durata di samsung-battery aggiunendo un ritardo</string>
-    <string name="battery_delay_seekbar_title">Ritardo</string>
+    <string name="battery_delay_subcat_title">Monitor batteria</string>
+    <string name="battery_delay_title_head">WakeLock</string>
+    <string name="battery_delay_summary_head">Modifica la durata di samsung-battery</string>
+    <string name="battery_delay_seekbar_title">Durata WakeLock</string>
+    <string name="seekbar_additional_information_battery">Intervalli troppo brevi possono aumentare il tempo di attività</string>
 
 </resources>
