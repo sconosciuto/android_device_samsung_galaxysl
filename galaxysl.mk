@@ -215,10 +215,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Vold
 PRODUCT_PROPERTY_OVERRIDES += \
-	ro.vold.switchablepair=/mnt/emmc,/mnt/sdcard
-
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-	persist.sys.vold.switchexternal=1
+	ro.vold.switchablepair=/storage/sdcard0,/storage/sdcard1
 
 include frameworks/native/build/phone-hdpi-512-dalvik-heap.mk
 
