@@ -27,6 +27,8 @@ elif ! busybox test -e /system/build.prop ; then
 	busybox mount -t ext4 /dev/block/mmcblk0p2 /cache
 	busybox mkdir /cache/recovery
 
+	busybox mkdir -p /emmc
+	busybox mkdir -p /sdcard
 	busybox mount -t vfat /dev/block/mmcblk0p1 /emmc
 	busybox mount -t vfat /dev/block/mmcblk1p1 /sdcard
 
@@ -55,9 +57,6 @@ busybox date >>boot.txt
 
 busybox rm -fr ramdisk.cpio.gz
 busybox rm -fr ramdisk-recovery.cpio.gz
-
-# needed to create the symlink to /sdcard/storage1
-busybox rmdir /emmc
 
 busybox rm -fr /stage1 /dev/*
 
