@@ -20,7 +20,7 @@ if busybox grep -q bootmode=2 /proc/cmdline || busybox grep -q androidboot.mode=
 elif ! busybox test -e /system/build.prop ; then
 	# emergency boot
 
-	# wait for the internal memory and the external SD
+	# wait for the internal memory
 	busybox sleep 3
 
 	make_ext4fs -b 4096 -g 32768 -i 8192 -I 256 -a /cache /dev/block/mmcblk0p2
@@ -28,9 +28,7 @@ elif ! busybox test -e /system/build.prop ; then
 	busybox mkdir /cache/recovery
 
 	busybox mkdir -p /emmc
-	busybox mkdir -p /sdcard
 	busybox mount -t vfat /dev/block/mmcblk0p1 /emmc
-	busybox mount -t vfat /dev/block/mmcblk1p1 /sdcard
 
 	UPDATE=$(busybox cat /emmc/cyanogenmod.cfg)
 
@@ -39,6 +37,8 @@ elif ! busybox test -e /system/build.prop ; then
 	fi
 
 	RAMDISK=ramdisk-recovery.cpio.gz
+
+	busybox umount /emmc
 fi
 
 busybox umount /system
