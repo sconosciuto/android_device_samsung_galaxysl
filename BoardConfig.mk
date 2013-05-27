@@ -73,12 +73,18 @@ USE_OPENGL_RENDERER := true
 TARGET_DISABLE_TRIPLE_BUFFERING := false
 COMMON_GLOBAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
 
-# OMX Stuff
+# OMX
 HARDWARE_OMX := true
-TARGET_USE_OMX_RECOVERY := false
-TARGET_USE_OMAP_COMPAT := true
-BUILD_WITH_TI_AUDIO := 1
-BUILD_PV_VIDEO_ENCODERS := 1
+ifdef HARDWARE_OMX
+OMX_JPEG := true
+OMX_VENDOR := ti
+OMX_VENDOR_INCLUDES := \
+   hardware/ti/omx/system/src/openmax_il/omx_core/inc \
+   hardware/ti/omx/image/src/openmax_il/jpeg_enc/inc
+OMX_VENDOR_WRAPPER := TI_OMX_Wrapper
+BOARD_OPENCORE_LIBRARIES := libOMX_Core
+BOARD_OPENCORE_FLAGS := -DHARDWARE_OMX=1
+endif
 
 # Touchscreen
 BOARD_USE_LEGACY_TOUCHSCREEN := true
