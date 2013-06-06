@@ -84,10 +84,10 @@ public class TouchscreenSensitivity extends DialogPreference implements OnClickL
         Utils.writeValue(FILE_PATH, KEY_VALUE + value);
         applyChanges();
 
-        if(sharedPrefs.getBoolean(DeviceSettings.KEY_TOUCHSCREEN_DRIVER_FILTER, false))
-            Utils.writeValue("/sys/touchscreen/driver_filter", "0");
+        if(sharedPrefs.getBoolean(DeviceSettings.KEY_TOUCHSCREEN_DISABLE_CALIBRATION, false))
+            Utils.writeValue("/sys/touchscreen/disable_calibration", "1");
         else
-            Utils.writeValue("/sys/touchscreen/driver_filter", "1");
+            Utils.writeValue("/sys/touchscreen/disable_calibration", "0");
     }
 
     public static boolean isSupported() {

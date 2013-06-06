@@ -267,8 +267,8 @@ on post-fs-data
 
 # FSync
     chown system system /sys/module/sync/parameters/fsync_enabled
-# Touchscreen driver filter
-    chown system system /sys/touchscreen/driver_filter
+# Touchscreen calibration control
+    chown system system /sys/touchscreen/disable_calibration
 
 # svnet waketime
     chown radio system /sys/devices/virtual/net/svnet0/waketime

@@ -10,9 +10,9 @@
                 android:title="@string/touchscreen_sensitivity_title_head"
                 android:summary="@string/touchscreen_sensitivity_summary_head" />
         <CheckBoxPreference
-                android:key="touchscreen_driver_filter"
-                android:title="@string/touchscreen_driver_filter_title_head"
-                android:summary="@string/touchscreen_driver_filter_summary_head"
+                android:key="touchscreen_disable_calibration"
+                android:title="@string/touchscreen_disable_calibration_title_head"
+                android:summary="@string/touchscreen_disable_calibration_summary_head"
                 android:defaultValue="false"
                 />
     </PreferenceCategory>

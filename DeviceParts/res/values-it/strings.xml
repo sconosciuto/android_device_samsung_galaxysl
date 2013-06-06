@@ -17,8 +17,8 @@
     <string name="touchscreen_sensitivity_summary_head">Imposta la sensibilità del touchscreen</string>
     <string name="touchscreen_sensitivity_seekbar_title">Sensibilità</string>
 
-    <string name="touchscreen_driver_filter_title_head">Disattiva filtro driver</string>
-    <string name="touchscreen_driver_filter_summary_head">La disattivazione del filtro rende lo schermo più traballante</string>
+    <string name="touchscreen_disable_calibration_title_head">Disattiva calibrazione</string>
+    <string name="touchscreen_disable_calibration_summary_head">Calibrazioni errate rendono il touchscreen inutilizzabile</string>
 
     <!-- Touchkeys -->
     <string name="touchkeys_subcat_title">Tasti a sfioramento</string>
