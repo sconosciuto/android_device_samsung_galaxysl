@@ -19,8 +19,8 @@
     <string name="touchscreen_sensitivity_summary_head">Set touch panel sensitivity</string>
     <string name="touchscreen_sensitivity_seekbar_title">Sensitivity</string>
 
-    <string name="touchscreen_disable_calibration_title_head">Disable calibration</string>
-    <string name="touchscreen_disable_calibration_summary_head">Wrong calibrations can make the touchscreen unresponsive</string>
+    <string name="touchscreen_disable_calibration_title_head">Manual calibration</string>
+    <string name="touchscreen_disable_calibration_summary_head">Press simultaneously the volume keys to calibrate the touchscreen</string>
 
     <!-- Touchkeys -->
     <string name="touchkeys_subcat_title">Touchkeys</string>
