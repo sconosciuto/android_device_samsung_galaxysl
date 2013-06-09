@@ -263,18 +263,6 @@ on post-fs-data
     chown system system /sys/touchscreen/set_touchscreen
     chown system system /sys/touchscreen/set_write
 
-# Permission for USB and UART path
-    chown system radio /sys/devices/platform/switch-sio/uart_sel
-    chown system radio /sys/devices/platform/switch-sio/usb_sel
-    
-# USB Device permission
-    chown system system /sys/devices/platform/i2c_omap.1/i2c-1/1-0048/twl4030_usb/vbus
-
-# FSync
-    chown system system /sys/module/sync/parameters/fsync_enabled
-# Touchscreen calibration control
-    chown system system /sys/touchscreen/disable_calibration
-
 # svnet waketime
     chown radio system /sys/devices/virtual/net/svnet0/waketime
 
