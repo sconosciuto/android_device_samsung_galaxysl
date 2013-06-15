@@ -121,6 +121,11 @@ PRODUCT_PACKAGES := \
     hostapd.conf \
     DeviceParts
 
+# Charger
+PRODUCT_PACKAGES += \
+    charger \
+    charger_res_images
+
 #Filesystem binaries
 PRODUCT_PACKAGES += \
     bml_over_mtd \
