@@ -10,11 +10,11 @@
     </string-array>
 
     <string-array name="vibrator_intensity_entries_values" translatable="false">
-        <item>700</item>
-        <item>800</item>
-        <item>900</item>
-        <item>1000</item>
-        <item>1160</item>
+        <item>0</item>
+        <item>32</item>
+        <item>64</item>
+        <item>96</item>
+        <item>127</item>
     </string-array>
 
     <!-- Radio -->
