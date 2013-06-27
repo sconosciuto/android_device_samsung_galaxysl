@@ -46,7 +46,7 @@
 
 #include "hal_public.h"
 
-#define MAX_HW_OVERLAYS 3
+#define MAX_HW_OVERLAYS 1
 #define NUM_NONSCALING_OVERLAYS 1
 #define HAL_PIXEL_FORMAT_BGRX_8888		0x1FF
 #define HAL_PIXEL_FORMAT_TI_NV12 0x100
