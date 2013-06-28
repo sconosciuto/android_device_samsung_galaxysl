@@ -153,6 +153,7 @@ private:
     };
 
     void initDefaultParameters(int CameraID);
+        void SetDSPKHz(unsigned int KHz);
 	int get_kernel_version();
 	void CreateExif(unsigned char* pInThumbnailData,int Inthumbsize,unsigned char* pOutExifBuf,int& OutExifSize,int flag);
 	void convertFromDecimalToGPSFormat(double arg1,int& arg2,int& arg3,double& arg4);
