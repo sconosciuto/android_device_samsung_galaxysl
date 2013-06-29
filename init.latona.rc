@@ -239,18 +239,6 @@ on post-fs-data
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     write /sys/class/rfkill/rfkill0/state 0
 
-# permission for touchscreen
-    chown system system /sys/touchscreen/bootcomplete
-    chown system system /sys/touchscreen/set_qt_firm_update
-    chown system system /sys/touchscreen/set_acquisition
-    chown system system /sys/touchscreen/set_grip
-    chown system system /sys/touchscreen/set_keyarray
-    chown system system /sys/touchscreen/set_noise
-    chown system system /sys/touchscreen/set_power
-    chown system system /sys/touchscreen/set_total
-    chown system system /sys/touchscreen/set_touchscreen
-    chown system system /sys/touchscreen/set_write
-
 # svnet waketime
     chown radio system /sys/devices/virtual/net/svnet0/waketime
 
@@ -277,9 +265,6 @@ on boot
 
 # Increase readahead buffers on MMC devices
     write /sys/block/mmcblk0/bdi/read_ahead_kb 1024
-
-# Touchscreen: bootcomplete
-    write /sys/touchscreen/bootcomplete 1
 
 service store_mac_addr /system/xbin/store-mac-addr.sh
     class core
