@@ -1,0 +1,5 @@
+import usb.rc
+
+on boot
+    # mass_storage support
+    setprop sys.usb.config mass_storage,adb

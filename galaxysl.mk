@@ -26,7 +26,9 @@ PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/lpm.rc:root/lpm.rc \
 	device/samsung/galaxysl/lpm.rc:recovery/root/lpm.rc \
 	device/samsung/galaxysl/ueventd.latona.rc:root/ueventd.latona.rc \
-	device/samsung/galaxysl/ueventd.latona.rc:recovery/root/ueventd.latona.rc
+	device/samsung/galaxysl/ueventd.latona.rc:recovery/root/ueventd.latona.rc \
+	device/samsung/galaxysl/init.recovery.latona.rc:root/init.recovery.latona.rc \
+	device/samsung/galaxysl/init.latona.usb.rc:recovery/root/usb.rc
 
 # Configuration files for audio
 PRODUCT_COPY_FILES += \
