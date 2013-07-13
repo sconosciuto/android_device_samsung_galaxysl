@@ -17,9 +17,6 @@ on early-init
     symlink /storage/sdcard1 /emmc
     symlink /storage/sdcard1 /mnt/emmc
 
-    mkdir /debug
-    mount debugfs /sys/kernel/debug /sys/kernel/debug
-
 on fs
     mkdir /radio 0775 radio radio
     mkdir /efs 0775 radio radio
@@ -44,46 +41,11 @@ on fs
     export TMPDIR /data/local/tmp
     symlink /data/local/tmp /tmp
 
-    mount debugfs debugfs /debug
-
 on post-fs
     # symlink for SamsungRIL
     symlink /radio/modem.bin /dev/block/bml13
 
 on post-fs-data
-# change permission of pm_debug
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_errorgain
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_smpswaittimemin
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_stepmin
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_smpswaittimemax
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_stepmax
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_vddmax
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_vddmin
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_timeout
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/fbb_enable
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_errorgain
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_smpswaittimemin
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_stepmin
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_smpswaittimemax
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_stepmax
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_vddmax
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_vddmin
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_timeout
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/autocomp
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/errweight
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/errmaxlimit
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/errminlimit
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/autocomp
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/errweight
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/errmaxlimit
-    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/errminlimit
-    chmod 0664 /sys/kernel/debug/pm_debug/voltage_off_while_idle
-    chmod 0664 /sys/kernel/debug/pm_debug/enable_off_mode
-    chmod 0664 /sys/kernel/debug/pm_debug/sleep_while_idle
-    chmod 0664 /sys/kernel/debug/pm_debug/wakeup_timer_seconds
-    chmod 0664 /sys/kernel/debug/pm_debug/wakeup_timer_milliseconds
-    chmod 0664 /sys/kernel/debug/pm_debug/enable_sr_vp_debug
-
     chown system system /sys/class/backlight/omap_bl/brightness
 
 # Vibrator
@@ -243,18 +205,22 @@ on post-fs-data
     chown radio system /sys/devices/virtual/net/svnet0/waketime
 
 on boot
+
+    # Mount debugfs
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
     # Enabling sleep in idle path
-    write /debug/pm_debug/sleep_while_idle 1
+    write /sys/kernel/debug/pm_debug/sleep_while_idle 1
 
     # Enabling Voltage OFF in idle path
-    write /debug/pm_debug/voltage_off_while_idle 1
+    write /sys/kernel/debug/pm_debug/voltage_off_while_idle 1
 
     # Enabling OFF mode
-    write /debug/pm_debug/enable_off_mode 1
+    write /sys/kernel/debug/pm_debug/enable_off_mode 1
 
     # Enabling Smartreflex
-    write /debug/pm_debug/smartreflex/sr_mpu/autocomp 1 
-    write /debug/pm_debug/smartreflex/sr_core/autocomp 1 
+    write /sys/kernel/debug/smartreflex/sr_mpu_iva/autocomp 1
+    write /sys/kernel/debug/smartreflex/sr_core/autocomp 1
 
     # Setting scaling governor
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ondemand
