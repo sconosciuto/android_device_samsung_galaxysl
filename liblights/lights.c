@@ -35,6 +35,9 @@
 
 /******************************************************************************/
 
+#define LEDS_LIGHT_ON		100
+#define LEDS_LIGHT_OFF		0
+
 static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -101,33 +104,41 @@ set_light_backlight(struct light_device_t* dev,
 }
 
 static int
-set_light_notification(struct light_device_t* dev,
-        struct light_state_t const* state)
+set_light_leds(struct light_state_t const *state)
 {
     int err = 0;
-	int brightness = rgb_to_brightness(state);
-    int v = 0;
 
-    // use the button backlight as notification led
     pthread_mutex_lock(&g_lock);
 
-    if (brightness+state->color == 0 || brightness > 100)
-    {
-        if (state->color & 0x00ffffff)
-        {
-            v = 100;
-        }
-    } 
-    else 
-    {
-            v = 0;
+    switch (state->flashMode) {
+    case LIGHT_FLASH_NONE:
+        err = write_int(BUTTON_FILE, LEDS_LIGHT_OFF);
+        break;
+    case LIGHT_FLASH_TIMED:
+    case LIGHT_FLASH_HARDWARE:
+        err = write_int(BUTTON_FILE, LEDS_LIGHT_ON);
+        break;
+    default:
+        err = -EINVAL;
     }
 
-    ALOGD("set_light_notification on=%d\n", v);
-    err = write_int(BUTTON_FILE, v);
     pthread_mutex_unlock(&g_lock);
 
     return err;
+}
+
+static int
+set_light_notification(struct light_device_t* dev,
+        struct light_state_t const* state)
+{
+        return set_light_leds(state);
+}
+
+static int
+set_light_attention(struct light_device_t* dev,
+        struct light_state_t const* state)
+{
+        return set_light_leds(state);
 }
 
 static int
@@ -147,15 +158,14 @@ static int open_lights(const struct hw_module_t* module, char const* name,
     int (*set_light)(struct light_device_t* dev,
             struct light_state_t const* state);
 
-    if (0 == strcmp(LIGHT_ID_BACKLIGHT, name)) {
+    if (0 == strcmp(LIGHT_ID_BACKLIGHT, name))
         set_light = set_light_backlight;
-    }
-    else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name)) {
+    else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name))
         set_light = set_light_notification;
-    }
-    else {
+    else if (0 == strcmp(LIGHT_ID_ATTENTION, name))
+        set_light = set_light_attention;
+    else
         return -EINVAL;
-    }
 
     pthread_once(&g_init, init_globals);
 
