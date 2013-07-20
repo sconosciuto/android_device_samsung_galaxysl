@@ -131,14 +131,9 @@ static int
 set_light_notification(struct light_device_t* dev,
         struct light_state_t const* state)
 {
-        return set_light_leds(state);
-}
-
-static int
-set_light_attention(struct light_device_t* dev,
-        struct light_state_t const* state)
-{
-        return set_light_leds(state);
+    ALOGI("%s: color %u fm %u is lit %u", __func__,
+        state->color, state->flashMode, (state->color & 0x00ffffff));
+    return set_light_leds(state);
 }
 
 static int
@@ -162,8 +157,6 @@ static int open_lights(const struct hw_module_t* module, char const* name,
         set_light = set_light_backlight;
     else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name))
         set_light = set_light_notification;
-    else if (0 == strcmp(LIGHT_ID_ATTENTION, name))
-        set_light = set_light_attention;
     else
         return -EINVAL;
 
