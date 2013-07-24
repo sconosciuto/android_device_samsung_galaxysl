@@ -99,6 +99,10 @@ CameraHardware::CameraHardware(int CameraID)
     mCameraID = CameraID;
     int ret = 0;
 
+    mPreviewHeap = NULL;
+    mScaleHeap = NULL;
+    mFrameScaled = NULL;
+
     if (CameraID == CAMERA_FF) {
         mCamera->Open(VIDEO_DEVICE_2);
         if (scale_init(PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_WIDTH, PREVIEW_HEIGHT, PIX_YUV422I, PIX_YUV422I) < 0)
@@ -560,12 +564,11 @@ int CameraHardware::previewThread()
     int index;
     nsecs_t timestamp;
     void *tempbuf;
-    int width, height, frame_size, framesize_yuv;
+    int width, height, framesize_yuv;
     int previewFramesToSkip;
 
     mParameters.getPreviewSize(&width, &height);
 
-    frame_size = width * height * 1.5;
     framesize_yuv = width * height * 2;
 
     if (UNLIKELY(mDebugFps)) {
@@ -613,8 +616,6 @@ int CameraHardware::previewThread()
                                GRALLOC_USAGE_SW_WRITE_OFTEN,
                                0, 0, width, height, &vaddr)) {
             if (mCameraID == CAMERA_FF) {
-                camera_memory_t* mScaleHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
-                camera_memory_t* mFrameScaled = mRequestMemory(-1, framesize_yuv, 1, NULL);
                 if (scale_process((void*)tempbuf, PREVIEW_WIDTH, PREVIEW_HEIGHT, (void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1)) {
                     ALOGE("scale_process() failed\n");
                 }
@@ -634,8 +635,6 @@ int CameraHardware::previewThread()
 
                 }
                 yuv422_to_YV12((unsigned char *)mFrameScaled->data,(unsigned char *)vaddr, width, height, stride);
-                mScaleHeap->release(mScaleHeap);
-                mFrameScaled->release(mFrameScaled);
             } else
                 yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height, stride);
 
@@ -653,12 +652,10 @@ callbacks:
     // Notify the client of a new frame.
     if (mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
         const char * preview_format = mParameters.getPreviewFormat();
-        camera_memory_t* picture = mRequestMemory(-1, frame_size, 1, NULL);
         if (!strcmp(preview_format, CameraParameters::PIXEL_FORMAT_YUV420SP)) {
-            Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)picture->data, width, height);
+            Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data, width, height);
         }
-        mDataCb(CAMERA_MSG_PREVIEW_FRAME, picture, index, NULL, mCallbackCookie);
-        picture->release(picture);
+        mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewHeap, index, NULL, mCallbackCookie);
     }
 
     Mutex::Autolock lock(mRecordingLock);
@@ -680,8 +677,6 @@ callbacks:
 status_t CameraHardware::startPreview()
 {
     int ret = 0;
-    int width, height;
-    int mRecordingFrameSize;
 
     mPreviewLock.lock();
     if (mPreviewRunning) {
@@ -701,18 +696,6 @@ status_t CameraHardware::startPreview()
         return NO_ERROR;
     }
 
-    mParameters.getPreviewSize(&width, &height);
-    mRecordingFrameSize = width * height * 2;
-
-    for (int i = 0; i < NB_BUFFER; i++) {
-        if (mRecordHeap[i] != NULL) {
-            mRecordHeap[i]->release(mRecordHeap[i]);
-            mRecordHeap[i] = 0;
-        }
-        //mRecordBufferState[i] = 0;
-        mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
-    }
-
     ret = startPreviewInternal();
     if (ret == OK)
         mPreviewCondition.signal();
@@ -727,6 +710,8 @@ status_t CameraHardware::startPreviewInternal()
 {
     int ret = 0;
     int fps = mParameters.getPreviewFrameRate();
+    int mRecordingFrameSize;
+    int mPreviewFrameSize;
 
     mParameters.getPreviewSize(&mPreviewWidth, &mPreviewHeight);
     ALOGD("startPreview width:%d,height:%d", mPreviewWidth, mPreviewHeight);
@@ -735,8 +720,40 @@ status_t CameraHardware::startPreviewInternal()
         return INVALID_OPERATION;
     }
 
-    if (mCameraID == CAMERA_FF)
+    mPreviewFrameSize = mPreviewWidth * mPreviewHeight * 1.5;
+    mRecordingFrameSize = mPreviewWidth * mPreviewHeight * 2;
+
+    if (mPreviewHeap) {
+        mPreviewHeap->release(mPreviewHeap);
+        mPreviewHeap = NULL;
+    }
+    mPreviewHeap = mRequestMemory(-1, mPreviewFrameSize, 1, NULL);
+
+    for (int i = 0; i < NB_BUFFER; i++) {
+        if (mRecordHeap[i] != NULL) {
+            mRecordHeap[i]->release(mRecordHeap[i]);
+            mRecordHeap[i] = 0;
+        }
+        //mRecordBufferState[i] = 0;
+        mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+    }
+
+    if (mCameraID == CAMERA_FF) {
         fps = 15;
+
+        if (mScaleHeap) {
+            mScaleHeap->release(mScaleHeap);
+            mScaleHeap = NULL;
+        }
+        mScaleHeap = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+
+        if (mFrameScaled) {
+            mFrameScaled->release(mFrameScaled);
+            mFrameScaled = NULL;
+        }
+        mFrameScaled = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+    }
+
     ret = mCamera->Configure(mPreviewWidth, mPreviewHeight, PIXEL_FORMAT, fps, 0);
     if (ret < 0) {
         ALOGE("Fail to configure camera device");
@@ -1378,6 +1395,18 @@ void CameraHardware::release()
             mRecordHeap[i]->release(mRecordHeap[i]);
             mRecordHeap[i] = NULL;
         }
+    }
+    if (mPreviewHeap) {
+        mPreviewHeap->release(mPreviewHeap);
+        mPreviewHeap = NULL;
+    }
+    if (mScaleHeap) {
+        mScaleHeap->release(mScaleHeap);
+        mScaleHeap = NULL;
+    }
+    if (mFrameScaled) {
+        mFrameScaled->release(mFrameScaled);
+        mFrameScaled = NULL;
     }
     mCamera->Uninit(0);
     if ((mCameraID == CAMERA_FF) && (isStart_scaler))
