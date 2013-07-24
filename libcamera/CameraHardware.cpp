@@ -42,8 +42,6 @@
 
 #define PIX_YUV422I 0
 
-//static const int INITIAL_SKIP_FRAME = 3;
-
 #define CAMHAL_GRALLOC_USAGE GRALLOC_USAGE_HW_TEXTURE | \
                              GRALLOC_USAGE_HW_RENDER | \
                              GRALLOC_USAGE_SW_READ_RARELY | \
@@ -72,7 +70,6 @@ int version = 0;
 static int processedFrames = 0;
 static int framesToSkipHD;
 static int framesToSkip;
-static int framesToDrop;
 
 namespace android {
 
@@ -99,7 +96,6 @@ CameraHardware::CameraHardware(int CameraID)
                     mMsgEnabled(0),
                     previewStopped(true),
                     mRecordingEnabled(false),
-                    mSkipFrame(0),
                     isStart_scaler(false)
 {
     /* create camera */
@@ -179,10 +175,6 @@ CameraHardware::CameraHardware(int CameraID)
     property_get("camera.480.fps", value, "1");
     framesToSkip = atoi(value);
     ALOGI("480p frames to skip: %d", framesToSkip);
-
-    property_get("camera.record.drop", value, "15");
-    framesToDrop = atoi(value);
-    ALOGI("Initial frames to drop: %d", framesToDrop);
 }
 
 void CameraHardware::initDefaultParameters(int CameraID)
@@ -604,15 +596,6 @@ int CameraHardware::previewThread()
         return NO_ERROR;
     }
 
-    mSkipFrameLock.lock();
-    if (mSkipFrame > 0) {
-        mSkipFrame--;
-        mSkipFrameLock.unlock();
-        ALOGV("%s: index %d skipping frame", __func__, index);
-        return NO_ERROR;
-    }
-    mSkipFrameLock.unlock();
-
     timestamp = systemTime(SYSTEM_TIME_MONOTONIC);
 
     if (mRecordingEnabled && height > 500) {
@@ -820,8 +803,6 @@ status_t CameraHardware::startPreviewInternal()
         return UNKNOWN_ERROR;
     }
 
-    //setSkipFrame(INITIAL_SKIP_FRAME);
-
     return NO_ERROR;
 }
 
@@ -861,9 +842,6 @@ status_t CameraHardware::startRecording()
 {
     ALOGE("startRecording");
     Mutex::Autolock lock(mRecordingLock);
-
-    //Skip the first recording frames since it is often garbled
-    setSkipFrame(framesToDrop);
 
     processedFrames = 0;
     buffersQueued = 0;
@@ -2079,14 +2057,5 @@ double CameraHardware::getGPSAltitude() const
         ALOGD("getGPSAltitude null \n");
         return 0;
     }
-}
-
-void CameraHardware::setSkipFrame(int frame)
-{
-    Mutex::Autolock lock(mSkipFrameLock);
-    if (frame < mSkipFrame)
-        return;
-
-    mSkipFrame = frame;
 }
 }; // namespace android
