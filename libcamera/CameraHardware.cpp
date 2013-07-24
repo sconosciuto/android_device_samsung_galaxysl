@@ -168,7 +168,7 @@ CameraHardware::CameraHardware(int CameraID)
     mDebugFps = atoi(value);
     ALOGD_IF(mDebugFps, "showfps enabled");
 
-    property_get("camera.720.fps", value, "8");
+    property_get("camera.720.fps", value, "4");
     framesToSkipHD = atoi(value);
     ALOGI("720p frames to skip: %d", framesToSkipHD);
 
