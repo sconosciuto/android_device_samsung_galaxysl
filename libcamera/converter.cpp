@@ -26,45 +26,48 @@ extern int version;
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 
-void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, int height, int stride)
+void yuv422_to_YV12(unsigned char* src, unsigned char* dest, int width, int height, int stride)
 {
-        int i, j;
-        int paddingY = stride - width;
-        int paddingC = paddingY / 2;
-        uint8_t *src = (uint8_t *)bufsrc;
-        uint8_t *src1 = src;
-        uint8_t *dst_y = (uint8_t *)bufdest;
-        uint8_t *dst_u, *dst_v;
+    unsigned int i, j;
+    unsigned int paddingY = stride - width;
+    unsigned int paddingC = paddingY / 2;
+    unsigned int doubleWidth = width * 2;
+    unsigned char *src1 = src;
+    unsigned char *udest, *vdest;
 
-        src1 = src;
-        for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j += 2) {
-            *dst_y++ = src1[1];
-            *dst_y++ = src1[3];
+    /* copy the Y values */
+    for (i = height; i != 0; i--) {
+        for (j = width; j != 0; j -= 2) {
+            *dest++ = src1[1];
+            *dest++ = src1[3];
             src1 += 4;
-            }
-            dst_y += paddingY;
         }
+        dest += paddingY;
+    }
 
-        src1 = src + width * 2;		/* next line */
+    /* copy the U and V values */
+    vdest = dest;
+    udest = vdest + stride * height / 4;
 
-        dst_v = dst_y;
-        dst_u = dst_y + stride * height / 4;
-
-        for (i = 0; i < height; i += 2) {
-            for (j = 0; j < width; j += 2) {
-                *dst_u++ = (src[0] + src1[0]) / 2;
-                *dst_v++ = (src[2] + src1[2]) / 2;
-                src += 4;
-                src1 += 4;
-            }
-            src = src1;
-            src1 += width * 2;
-            dst_u += paddingC;
-            dst_v += paddingC;
+    for (i = height; i != 0; i -= 2) {
+        for (j = width; j != 0; j -= 2) {
+        /*
+           For the conversion from YUV 422 to 420 to be correct,
+           the U and V values should be calculated as an average.
+           But for the preview purpose, we need efficiency more
+           than accuracy. Using just the first of the two values
+           looks good enough and the speed-up of the conversion
+           is significant enough to justify such simplification.
+          */
+            *udest++ = src[0];
+            *vdest++ = src[2];
+            src += 4;
         }
+        src += doubleWidth;
+        udest += paddingC;
+        vdest += paddingC;
+    }
 }
-
 
 void
 yuyv422_to_yuv420(unsigned char *bufsrc, unsigned char *bufdest, int width, int height)
