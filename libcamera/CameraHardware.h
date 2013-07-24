@@ -63,9 +63,6 @@ typedef struct {
 
 class CameraHardware {
 public:
-    virtual sp<IMemoryHeap> getPreviewHeap() const;
-    virtual sp<IMemoryHeap> getRawHeap() const;
-
     virtual void setCallbacks(camera_notify_callback notify_cb,
                               camera_data_callback data_cb,
                               camera_data_timestamp_callback data_cb_timestamp,
@@ -181,20 +178,10 @@ private:
     Mutex               mRecordingLock;
     CameraParameters    mParameters;
 
-    sp<MemoryHeapBase>  mHeap;         // format: 420
-    sp<MemoryBase>      mBuffer;
-    sp<MemoryHeapBase>  mPreviewHeap;
-    sp<MemoryBase>      mPreviewBuffer;
-	sp<MemoryHeapBase>  mRawHeap;      /* format: 422 */
-	sp<MemoryBase>      mRawBuffer;
-    sp<MemoryBase>      mBuffers[kBufferCount];		
-    //int mRecordBufferState[kBufferCount];
-
     mutable Mutex mSkipFrameLock;
             int mSkipFrame;
 
     V4L2Camera         *mCamera;
-    int                 mPreviewFrameSize;
 	
 	NEON_fpo Neon_Rotate;
 	NEON_FUNCTION_ARGS* neon_args;
@@ -237,7 +224,6 @@ private:
 
     int32_t             mMsgEnabled;
 
-    bool                previewStopped;
     bool                mRecordingEnabled;
 
 			double mPreviousGPSLatitude;

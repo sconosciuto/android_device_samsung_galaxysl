@@ -84,17 +84,12 @@ gralloc_module_t const* CameraHardware::mGrallocHal;
 
 CameraHardware::CameraHardware(int CameraID)
                   : mParameters(),
-                    mHeap(0),
-                    mPreviewHeap(0),
-                    mRawHeap(0),
                     mCamera(0),
-                    mPreviewFrameSize(0),
                     mNotifyCb(0),
                     mDataCb(0),
                     mDataCbTimestamp(0),
                     mCallbackCookie(0),
                     mMsgEnabled(0),
-                    previewStopped(true),
                     mRecordingEnabled(false),
                     isStart_scaler(false)
 {
@@ -391,18 +386,6 @@ CameraHardware::~CameraHardware()
     }
     delete mCamera;
     mCamera = 0;
-}
-
-sp<IMemoryHeap> CameraHardware::getPreviewHeap() const
-{
-    ALOGV("Preview Heap");
-    return mPreviewHeap;
-}
-
-sp<IMemoryHeap> CameraHardware::getRawHeap() const
-{
-    ALOGV("Raw Heap");
-    return mRawHeap;
 }
 
 void CameraHardware::setCallbacks(camera_notify_callback notify_cb,
@@ -742,7 +725,6 @@ status_t CameraHardware::startPreview()
 
 status_t CameraHardware::startPreviewInternal()
 {
-    int mHeapSize = 0;
     int ret = 0;
     int fps = mParameters.getPreviewFrameRate();
 
@@ -760,34 +742,6 @@ status_t CameraHardware::startPreviewInternal()
         ALOGE("Fail to configure camera device");
         return INVALID_OPERATION;
     }
-    /* clear previously buffers*/
-    if (mPreviewHeap != NULL) {
-        ALOGD("mPreviewHeap Cleaning!!!!");
-        mPreviewHeap.clear();
-    }
-
-    if (mRawHeap != NULL) {
-        ALOGD("mRawHeap Cleaning!!!!");
-        mRawHeap.clear();
-    }
-
-    if (mHeap != NULL) {
-        ALOGD("mHeap Cleaning!!!!");
-        mHeap.clear();
-    }
-
-    mPreviewFrameSize = mPreviewWidth * mPreviewHeight * 2;
-    mHeapSize = (mPreviewWidth * mPreviewHeight * 3) >> 1;
-
-    /* mHead is yuv420 buffer, as default encoding is yuv420 */
-    mHeap = new MemoryHeapBase(mHeapSize);
-    mBuffer = new MemoryBase(mHeap, 0, mHeapSize);
-
-    mPreviewHeap = new MemoryHeapBase(mPreviewFrameSize);
-    mPreviewBuffer = new MemoryBase(mPreviewHeap, 0, mPreviewFrameSize);
-
-    mRawHeap = new MemoryHeapBase(mPreviewFrameSize);
-    mRawBuffer = new MemoryBase(mRawHeap, 0, mPreviewFrameSize);
 
     ret = mCamera->BufferMap(0);
     if (ret) {
