@@ -564,18 +564,22 @@ int CameraHardware::previewThread()
     int index;
     nsecs_t timestamp;
     void *tempbuf;
-    int width, height, framesize_yuv;
+    int width, height, framesize_record, framesize_preview;
     int previewFramesToSkip;
+    int offset;
 
     mParameters.getPreviewSize(&width, &height);
 
-    framesize_yuv = width * height * 2;
+    framesize_record = width * height * 2;
+    framesize_preview = width * height * 1.5;
 
     if (UNLIKELY(mDebugFps)) {
         showFPS("Preview");
     }
 
     tempbuf = mCamera->GrabPreviewFrame(index);
+
+    offset = framesize_preview * index;
 
     if (mRecordingEnabled && buffersQueued > 6) {
         ALOGE("Buffers queued: %d", buffersQueued);
@@ -654,9 +658,11 @@ callbacks:
         const char * preview_format = mParameters.getPreviewFormat();
         if (!strcmp(preview_format, CameraParameters::PIXEL_FORMAT_YUV420SP)) {
             if (mCameraID == CAMERA_FF)
-                Neon_Convert_yuv422_to_NV21((unsigned char*)mFrameScaled->data, (unsigned char*)mPreviewHeap->data, width, height);
+                Neon_Convert_yuv422_to_NV21((unsigned char*)mFrameScaled->data, (unsigned char*)mPreviewHeap->data + offset, width, height);
             else
-                Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data, width, height);
+                Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data + offset, width, height);
+        } else {
+            memcpy((unsigned char*)mPreviewHeap->data + offset, (unsigned char *)tempbuf, framesize_record);
         }
         mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewHeap, index, NULL, mCallbackCookie);
     }
@@ -664,9 +670,9 @@ callbacks:
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
         if (mCameraID == CAMERA_FF)
-            memcpy(mRecordHeap[index]->data, mFrameScaled->data, framesize_yuv);
+            memcpy(mRecordHeap[index]->data, mFrameScaled->data, framesize_record);
         else
-            memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+            memcpy(mRecordHeap[index]->data, tempbuf, framesize_record);
         buffersQueued++;
         //mRecordBufferState[index] = 1;
 
@@ -732,7 +738,7 @@ status_t CameraHardware::startPreviewInternal()
         mPreviewHeap->release(mPreviewHeap);
         mPreviewHeap = NULL;
     }
-    mPreviewHeap = mRequestMemory(-1, mPreviewFrameSize, 1, NULL);
+    mPreviewHeap = mRequestMemory(-1, mPreviewFrameSize, NB_BUFFER, NULL);
 
     for (int i = 0; i < NB_BUFFER; i++) {
         if (mRecordHeap[i] != NULL) {
