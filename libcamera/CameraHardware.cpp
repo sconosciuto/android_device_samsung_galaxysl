@@ -660,8 +660,10 @@ callbacks:
 
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
-
-        memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+        if (mCameraID == CAMERA_FF)
+            memcpy(mRecordHeap[index]->data, mFrameScaled->data, framesize_yuv);
+        else
+            memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
         buffersQueued++;
         //mRecordBufferState[index] = 1;
 
