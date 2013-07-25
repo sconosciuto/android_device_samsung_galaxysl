@@ -653,7 +653,10 @@ callbacks:
     if (mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
         const char * preview_format = mParameters.getPreviewFormat();
         if (!strcmp(preview_format, CameraParameters::PIXEL_FORMAT_YUV420SP)) {
-            Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data, width, height);
+            if (mCameraID == CAMERA_FF)
+                Neon_Convert_yuv422_to_NV21((unsigned char*)mFrameScaled->data, (unsigned char*)mPreviewHeap->data, width, height);
+            else
+                Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data, width, height);
         }
         mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewHeap, index, NULL, mCallbackCookie);
     }
