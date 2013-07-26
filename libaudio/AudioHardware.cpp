@@ -1211,18 +1211,24 @@ status_t AudioHardware::setInputSource_l(audio_source source)
      if (source != mInputSource) {
          if ((source == AUDIO_SOURCE_DEFAULT) || (mMode != AudioSystem::MODE_IN_CALL)) {
              if (mMixer) {
-		 struct mixer_ctl *ctl;
+                 TRACE_DRIVER_IN(DRV_MIXER_GET)
+                 TRACE_DRIVER_OUT
                  const char* sourceName;
+                 struct mixer_ctl *ctl;
                  switch (source) {
                      case AUDIO_SOURCE_VOICE_COMMUNICATION:
                      case AUDIO_SOURCE_VOICE_RECOGNITION:
+                     case AUDIO_SOURCE_VOICE_CALL:
+                        ctl = mixer_get_ctl_by_name(mMixer, "VR Mode"); // missing
+                        if (ctl == NULL) {
+                            return NO_INIT;
+                        }
                         sourceName = "on";
-                                          TRACE_DRIVER_IN(DRV_MIXER_GET)
-                 	ctl= mixer_get_ctl_by_name(mMixer, "VR Mode");
-                 	TRACE_DRIVER_OUT
-                 	if (ctl == NULL) {
-                     		return NO_INIT;
-                 	}
+                        break;
+                     case AUDIO_SOURCE_DEFAULT:
+                     case AUDIO_SOURCE_MIC:
+                     case AUDIO_SOURCE_VOICE_UPLINK:
+                     case AUDIO_SOURCE_VOICE_DOWNLINK:
                      default:
                          return NO_INIT;
                  }
