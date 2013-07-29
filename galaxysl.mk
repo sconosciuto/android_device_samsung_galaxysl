@@ -134,7 +134,8 @@ PRODUCT_PACKAGES := \
 #Filesystem binaries
 PRODUCT_PACKAGES += \
     bml_over_mtd \
-    utility_make_ext4fs
+    utility_make_ext4fs \
+    make_ext4fs
 
 # ICS sound
 PRODUCT_PACKAGES += \
