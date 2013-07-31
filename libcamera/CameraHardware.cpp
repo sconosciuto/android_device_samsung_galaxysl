@@ -59,6 +59,9 @@
 #define FRONT_CAMERA_FOCUS_DISTANCES_STR "0.20,0.25,Infinity"
 const char FOCUS_MODE_FACEDETECTION[] = "facedetect";
 
+#define MIN_INTERVAL 35000000
+#define MAX_INTERVAL 60000000
+
 #include <cutils/properties.h>
 #ifndef UNLIKELY
 #define UNLIKELY(exp) (__builtin_expect( (exp) != 0, false ))
@@ -70,6 +73,8 @@ int version = 0;
 namespace android {
 
 static int buffersQueued = 0;
+
+static nsecs_t mLastShownTime = 0;
 
 /* 29/12/10 : preview/picture size validation logic */
 const char CameraHardware::supportedPictureSizes_ffc [] = "640x480";
@@ -554,8 +559,12 @@ int CameraHardware::previewThread()
     void *tempbuf;
     int width, height, framesize_record, framesize_preview;
     int offset;
+    int maxInterval = MAX_INTERVAL;
 
     mParameters.getPreviewSize(&width, &height);
+
+    if (height > 500 && mRecordingEnabled)
+        maxInterval = MAX_INTERVAL * 3 / 2;
 
     framesize_record = width * height * 2;
     framesize_preview = width * height * 1.5;
@@ -574,6 +583,12 @@ int CameraHardware::previewThread()
     }
 
     timestamp = systemTime(SYSTEM_TIME_MONOTONIC);
+
+    if ((timestamp - mLastShownTime) > MIN_INTERVAL && (timestamp - mLastShownTime) < maxInterval) {
+        ALOGV("Skipping preview frame: %lldns\n", (timestamp - mLastShownTime));
+        goto callbacks;
+    }
+    mLastShownTime = timestamp;
 
     if (mNativeWindow && mGrallocHal) {
         buffer_handle_t *buf_handle;
