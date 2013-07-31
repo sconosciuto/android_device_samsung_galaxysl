@@ -317,6 +317,9 @@ void CameraHardware::initDefaultParameters(int CameraID)
     p.set(p.KEY_GPS_TIMESTAMP, "0");
     p.set(p.KEY_GPS_PROCESSING_METHOD, "GPS");
 
+    p.set("iso-values", "auto,ISO50,ISO100,ISO200,ISO400,ISO800,ISO1600");
+    p.set("iso", "auto");
+
     //Extra Parameters - GalaxySL
     mCamera->setISO(ISO_AUTO);
     mCamera->setMetering(METERING_CENTER);
@@ -1321,6 +1324,40 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                 ALOGE("ERR(%s):Fail on Camera->setZoom(%d)", __func__, new_zoom);
             } else {
                 mParameters.set(CameraParameters::KEY_ZOOM, new_zoom);
+            }
+        }
+
+        // ISO
+        const char *new_iso_str = params.get("iso");
+        ALOGV("%s : new_iso_str %s", __func__, new_iso_str);
+        if (new_iso_str != NULL) {
+            int new_iso = -1;
+            if (!strcmp(new_iso_str, "auto")) {
+                new_iso = ISO_AUTO;
+            } else if (!strcmp(new_iso_str, "ISO50")) {
+                new_iso = ISO_50;
+            } else if (!strcmp(new_iso_str, "ISO100")) {
+                new_iso = ISO_100;
+            } else if (!strcmp(new_iso_str, "ISO200")) {
+                new_iso = ISO_200;
+            } else if (!strcmp(new_iso_str, "ISO400")) {
+                new_iso = ISO_400;
+            } else if (!strcmp(new_iso_str, "ISO800")) {
+               new_iso = ISO_800;
+            } else if (!strcmp(new_iso_str, "ISO1600")) {
+               new_iso = ISO_1600;
+            } else {
+                ALOGE("ERR(%s):Invalid iso value(%s)", __func__, new_iso_str);
+                ret = UNKNOWN_ERROR;
+            }
+
+            if (0 <= new_iso) {
+                if (mCamera->setISO(new_iso) < 0) {
+                    ALOGE("ERR(%s):Fail on mCamera->setISO(new_iso(%d))", __func__, new_iso);
+                    ret = UNKNOWN_ERROR;
+                } else {
+                    mParameters.set("iso", new_iso_str);
+                }
             }
         }
     }
