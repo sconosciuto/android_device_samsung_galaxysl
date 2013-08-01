@@ -255,6 +255,7 @@ void CameraHardware::initDefaultParameters(int CameraID)
         p.set(CameraParameters::KEY_ZOOM_RATIOS, "100,125,150,175,200,225,250,275,300,325,350,375,400");
         p.set(CameraParameters::KEY_ZOOM_SUPPORTED, "true");
 
+        // scene
         parameterString = CameraParameters::SCENE_MODE_AUTO;
         parameterString.append(",");
         parameterString.append(CameraParameters::SCENE_MODE_PORTRAIT);
@@ -282,32 +283,37 @@ void CameraHardware::initDefaultParameters(int CameraID)
         parameterString.append("backlight,dusk-dawn,text,fall-color");
         p.set(CameraParameters::KEY_SUPPORTED_SCENE_MODES,
               parameterString.string());
-    }
-    p.set(CameraParameters::KEY_SCENE_MODE, CameraParameters::SCENE_MODE_AUTO);
-    parameterString = CameraParameters::EFFECT_NONE;
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_MONO);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_NEGATIVE);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_SEPIA);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_AQUA);
-    parameterString.append(",");
-    parameterString.append("sharpen,purple,green-tint,blue-tint,pink,yellow,red-tint,mono,antique");
-    p.set(CameraParameters::KEY_SUPPORTED_EFFECTS, parameterString.string());
 
-    parameterString = CameraParameters::WHITE_BALANCE_AUTO;
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_INCANDESCENT);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_FLUORESCENT);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_DAYLIGHT);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_CLOUDY_DAYLIGHT);
-    p.set(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE,
-          parameterString.string());
+        // effect
+        parameterString = CameraParameters::EFFECT_NONE;
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_MONO);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_NEGATIVE);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_SEPIA);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_AQUA);
+        parameterString.append(",");
+        parameterString.append("sharpen,purple,green-tint,blue-tint,pink,"
+                               "yellow,red-tint,mono,antique");
+        p.set(CameraParameters::KEY_SUPPORTED_EFFECTS, parameterString.string());
+
+        // whitebalance
+        parameterString = CameraParameters::WHITE_BALANCE_AUTO;
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_INCANDESCENT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_FLUORESCENT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_DAYLIGHT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_CLOUDY_DAYLIGHT);
+        p.set(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE,
+              parameterString.string());
+    }
+
+    p.set(CameraParameters::KEY_SCENE_MODE, CameraParameters::SCENE_MODE_AUTO);
 
     p.set(CameraParameters::KEY_EXPOSURE_COMPENSATION, "0");
     p.set(CameraParameters::KEY_MAX_EXPOSURE_COMPENSATION, "4");
