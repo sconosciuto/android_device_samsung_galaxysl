@@ -89,6 +89,7 @@ V4L2Camera::V4L2Camera ()
     mSaturation = 4;
     mBrightness = 5;
     mAutofocusRunning = 0;
+    mEffect = 1;
 
 #ifdef _OMAP_RESIZER_
     videoIn->resizeHandle = -1;
@@ -1275,6 +1276,35 @@ int V4L2Camera::setBrightness(int brightness)
 int V4L2Camera::getBrightness(void)
 {
     return (mBrightness);
+}
+
+// -----------------------------------
+int V4L2Camera::setImageEffect(int image_effect)
+{
+    ALOGV("%s(image_effect(%d))", __func__, image_effect);
+
+    if (image_effect <= CAMERA_EFFECT_BASE || CAMERA_EFFECT_MAX <= image_effect) {
+        ALOGE("ERR(%s):Invalid image_effect(%d)", __func__, image_effect);
+        return -1;
+    }
+
+    if (videoIn->isStreaming) {
+        if (mEffect != image_effect) {
+            mEffect = image_effect;
+            if (v4l2_s_ctrl(camHandle, V4L2_CID_EFFECT, image_effect) < 0) {
+                ALOGE("ERR(%s):Fail on V4L2_CID_EFFECT", __func__);
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int V4L2Camera::getImageEffect(void)
+{
+    ALOGV("%s : image_effect(%d)", __func__, mEffect);
+    return mEffect;
 }
 
 // ===============================================================================================

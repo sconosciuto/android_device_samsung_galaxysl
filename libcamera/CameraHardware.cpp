@@ -287,6 +287,10 @@ void CameraHardware::initDefaultParameters(int CameraID)
     parameterString.append(CameraParameters::EFFECT_NEGATIVE);
     parameterString.append(",");
     parameterString.append(CameraParameters::EFFECT_SEPIA);
+    parameterString.append(",");
+    parameterString.append(CameraParameters::EFFECT_AQUA);
+    parameterString.append(",");
+    parameterString.append("sharpen,purple,green-tint,blue-tint,pink,yellow,red-tint,mono,antique");
     p.set(CameraParameters::KEY_SUPPORTED_EFFECTS, parameterString.string());
 
     parameterString = CameraParameters::WHITE_BALANCE_AUTO;
@@ -1357,6 +1361,54 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                     ret = UNKNOWN_ERROR;
                 } else {
                     mParameters.set("iso", new_iso_str);
+                }
+            }
+        }
+
+        // image effect
+        const char *new_image_effect_str = params.get(CameraParameters::KEY_EFFECT);
+        if (new_image_effect_str != NULL) {
+
+            int new_image_effect = -1;
+
+            if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_NONE))
+                new_image_effect = CAMERA_EFFECT_NONE;
+            else if (!strcmp(new_image_effect_str, "sharpen"))
+                new_image_effect = CAMERA_EFFECT_SHARPEN;
+            else if (!strcmp(new_image_effect_str, "purple"))
+                new_image_effect = CAMERA_EFFECT_PURPLE;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_NEGATIVE))
+                new_image_effect = CAMERA_EFFECT_NEGATIVE;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_SEPIA))
+                new_image_effect = CAMERA_EFFECT_SEPIA;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_AQUA))
+                new_image_effect = CAMERA_EFFECT_AQUA;
+            else if (!strcmp(new_image_effect_str, "green-tint"))
+                new_image_effect = CAMERA_EFFECT_GREEN;
+            else if (!strcmp(new_image_effect_str, "blue-tint"))
+                new_image_effect = CAMERA_EFFECT_BLUE;
+            else if (!strcmp(new_image_effect_str, "pink"))
+                new_image_effect = CAMERA_EFFECT_PINK;
+            else if (!strcmp(new_image_effect_str, "yellow"))
+                new_image_effect = CAMERA_EFFECT_YELLOW;
+            else if (!strcmp(new_image_effect_str, "red-tint"))
+                new_image_effect = CAMERA_EFFECT_RED;
+            else if (!strcmp(new_image_effect_str, "antique"))
+                new_image_effect = CAMERA_EFFECT_ANTIQUE;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_MONO))
+                new_image_effect = CAMERA_EFFECT_BW;
+            else {
+                //posterize, whiteboard, blackboard, solarize
+                ALOGE("ERR(%s):Invalid effect(%s)", __func__, new_image_effect_str);
+                ret = UNKNOWN_ERROR;
+            }
+
+            if (new_image_effect >= 0) {
+                if (mCamera->setImageEffect(new_image_effect) < 0) {
+                    ALOGE("ERR(%s):Fail on mCamera->setImageEffect(effect(%d))", __func__, new_image_effect);
+                    ret = UNKNOWN_ERROR;
+                } else {
+                    mParameters.set(CameraParameters::KEY_EFFECT, new_image_effect_str);
                 }
             }
         }
