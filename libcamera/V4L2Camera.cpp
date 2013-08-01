@@ -77,19 +77,19 @@ V4L2Camera::V4L2Camera ()
     mediaIn->input_source = 1;
     camHandle = -1;
     m_flag_init = 0;
-    mZoomLevel = 1;
-    mWhiteBalance = 1;
-    mFocusMode = 1;
-    mSceneMode = 1;
+    mZoomLevel = -1;
+    mWhiteBalance = -1;
+    mFocusMode = -1;
+    mSceneMode = -1;
     m_exif_orientation = -1;
-    mISO = 1;
-    mMetering = 1;
-    mContrast = 4;
-    mSharpness = 4;
-    mSaturation = 4;
-    mBrightness = 5;
+    mISO = -1;
+    mMetering = -1;
+    mContrast = -1;
+    mSharpness = -1;
+    mSaturation = -1;
+    mBrightness = -1;
     mAutofocusRunning = 0;
-    mEffect = 1;
+    mEffect = -1;
 
 #ifdef _OMAP_RESIZER_
     videoIn->resizeHandle = -1;
