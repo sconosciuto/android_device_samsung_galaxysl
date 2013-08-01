@@ -276,6 +276,10 @@ void CameraHardware::initDefaultParameters(int CameraID)
         parameterString.append(CameraParameters::SCENE_MODE_PARTY);
         parameterString.append(",");
         parameterString.append(CameraParameters::SCENE_MODE_CANDLELIGHT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::SCENE_MODE_ASD);
+        parameterString.append(",");
+        parameterString.append("backlight,dusk-dawn,text,fall-color");
         p.set(CameraParameters::KEY_SUPPORTED_SCENE_MODES,
               parameterString.string());
     }
@@ -1230,7 +1234,7 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                         "15000,30000");
 
         if (!strcmp(new_scene_mode_str, (const char*)CameraParameters::SCENE_MODE_AUTO)) {
-            new_scene_mode = SCENE_MODE_NONE;
+            new_scene_mode = SCENE_MODE_OFF;
         } else {
             // defaults for non-auto scene modes
             if (mCameraID == CAMERA_BF) {
@@ -1244,34 +1248,43 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                                (const char*)CameraParameters::SCENE_MODE_LANDSCAPE)) {
                 new_scene_mode = SCENE_MODE_LANDSCAPE;
             } else if (!strcmp(new_scene_mode_str,
-                               (const char*)CameraParameters::SCENE_MODE_SPORTS)) {
-                new_scene_mode = SCENE_MODE_SPORTS;
+                               (const char*)CameraParameters::SCENE_MODE_NIGHT)) {
+                new_scene_mode = SCENE_MODE_NIGHTSHOT;
             } else if (!strcmp(new_scene_mode_str,
-                               (const char*)CameraParameters::SCENE_MODE_PARTY)) {
-                new_scene_mode = SCENE_MODE_PARTY_INDOOR;
-            } else if ((!strcmp(new_scene_mode_str,
-                                (const char*)CameraParameters::SCENE_MODE_BEACH)) ||
-                       (!strcmp(new_scene_mode_str,
-                                (const char*)CameraParameters::SCENE_MODE_SNOW))) {
+                               (const char*)CameraParameters::SCENE_MODE_BEACH)) {
+                new_scene_mode = SCENE_MODE_BEACH_SNOW;
+            } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_SNOW)) {
                 new_scene_mode = SCENE_MODE_BEACH_SNOW;
             } else if (!strcmp(new_scene_mode_str,
                                (const char*)CameraParameters::SCENE_MODE_SUNSET)) {
                 new_scene_mode = SCENE_MODE_SUNSET;
             } else if (!strcmp(new_scene_mode_str,
-                               (const char*)CameraParameters::SCENE_MODE_NIGHT)) {
-                new_scene_mode = SCENE_MODE_NIGHTSHOT;
-                mParameters.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE, "(4000,30000)");
-                mParameters.set(CameraParameters::KEY_PREVIEW_FPS_RANGE,
-                                "4000,30000");
-            } else if (!strcmp(new_scene_mode_str,
                                (const char*)CameraParameters::SCENE_MODE_FIREWORKS)) {
                 new_scene_mode = SCENE_MODE_FIREWORKS;
             } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_SPORTS)) {
+                new_scene_mode = SCENE_MODE_SPORTS;
+            } else if (!strcmp(new_scene_mode_str,
                                (const char*)CameraParameters::SCENE_MODE_CANDLELIGHT)) {
-                new_scene_mode = SCENE_MODE_CANDLE_LIGHT;
+                new_scene_mode = SCENE_MODE_CANDLELIGHT;
+            } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_ASD)) {
+                new_scene_mode = SCENE_MODE_ASD;
+            } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_PARTY)) {
+                new_scene_mode = SCENE_MODE_INDOORS;
+            } else if (!strcmp(new_scene_mode_str, "backlight")) {
+                new_scene_mode = SCENE_MODE_AGAINST_LIGHT;
+            } else if (!strcmp(new_scene_mode_str, "dusk-dawn")) {
+                new_scene_mode = SCENE_MODE_DAWN;
+            } else if (!strcmp(new_scene_mode_str, "fall-color")) {
+                new_scene_mode = SCENE_MODE_FALLCOLOR;
+            } else if (!strcmp(new_scene_mode_str, "text")) {
+                new_scene_mode = SCENE_MODE_TEXT;
             } else {
                 ALOGE("%s::unmatched scene_mode(%s)",
-                      __func__, new_scene_mode_str);   //action, night-portrait, theatre, steadyphoto
+                      __func__, new_scene_mode_str);
                 ret = UNKNOWN_ERROR;
             }
         }
