@@ -90,6 +90,7 @@ V4L2Camera::V4L2Camera ()
     mBrightness = -1;
     mAutofocusRunning = 0;
     mEffect = -1;
+    mJpegQuality = -1;
 
 #ifdef _OMAP_RESIZER_
     videoIn->resizeHandle = -1;
@@ -1305,6 +1306,33 @@ int V4L2Camera::getImageEffect(void)
 {
     ALOGV("%s : image_effect(%d)", __func__, mEffect);
     return mEffect;
+}
+
+//======================================================================
+
+int V4L2Camera::setJpegQuality(int jpeg_quality)
+{
+    ALOGV("%s(jpeg_quality (%d))", __func__, jpeg_quality);
+
+    if (jpeg_quality < JPEG_QUALITY_SUPERFINE || JPEG_QUALITY_MAX <= jpeg_quality) {
+        ALOGE("ERR(%s):Invalid jpeg_quality (%d)", __func__, jpeg_quality);
+        return -1;
+    }
+
+    if (mJpegQuality != jpeg_quality) {
+        mJpegQuality = jpeg_quality;
+        if (v4l2_s_ctrl(camHandle, V4L2_CID_JPEG_QUALITY, jpeg_quality) < 0) {
+            ALOGE("ERR(%s):Fail on V4L2_CID_JPEG_QUALITY", __func__);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int V4L2Camera::getJpegQuality(void)
+{
+    return mJpegQuality;
 }
 
 // ===============================================================================================

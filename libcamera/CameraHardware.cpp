@@ -1438,6 +1438,28 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                 }
             }
         }
+
+        //JPEG image quality
+        int new_jpeg_quality = params.getInt(CameraParameters::KEY_JPEG_QUALITY);
+        ALOGV("%s : new_jpeg_quality %d", __func__, new_jpeg_quality);
+        /* we ignore bad values */
+        if (new_jpeg_quality >=1 && new_jpeg_quality <= 100) {
+            if (new_jpeg_quality > 90)
+                  new_jpeg_quality = JPEG_QUALITY_SUPERFINE;
+            else if (new_jpeg_quality > 75)
+                  new_jpeg_quality = JPEG_QUALITY_FINE;
+            else if (new_jpeg_quality > 50)
+                  new_jpeg_quality = JPEG_QUALITY_NORMAL;
+            else
+                  new_jpeg_quality = JPEG_QUALITY_ECONOMY;
+
+            if (mCamera->setJpegQuality(new_jpeg_quality) < 0) {
+                ALOGE("ERR(%s):Fail on mCamera->setJpegQuality(quality(%d))", __func__, new_jpeg_quality);
+                ret = UNKNOWN_ERROR;
+            } else {
+                mParameters.set(CameraParameters::KEY_JPEG_QUALITY, new_jpeg_quality);
+            }
+        }
     }
     // rotation
     int new_rotation = params.getInt(CameraParameters::KEY_ROTATION);
