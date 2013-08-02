@@ -1214,25 +1214,26 @@ status_t AudioHardware::setInputSource_l(audio_source source)
                  TRACE_DRIVER_IN(DRV_MIXER_GET)
                  TRACE_DRIVER_OUT
                  const char* sourceName;
+                 const char* mixerName;
                  struct mixer_ctl *ctl;
                  switch (source) {
                      case AUDIO_SOURCE_VOICE_COMMUNICATION:
                      case AUDIO_SOURCE_VOICE_RECOGNITION:
                      case AUDIO_SOURCE_VOICE_CALL:
-                        ctl = mixer_get_ctl_by_name(mMixer, "VR Mode"); // missing
-                        if (ctl == NULL) {
-                            return NO_INIT;
-                        }
-                        sourceName = "on";
-                        break;
+                         mixerName = "VR Mode";
+                         sourceName = "on";
+                         break;
                      case AUDIO_SOURCE_DEFAULT:
                      case AUDIO_SOURCE_MIC:
+                         mixerName = "VR Mode";
+                         sourceName = "off";
+                         break;
                      case AUDIO_SOURCE_VOICE_UPLINK:
                      case AUDIO_SOURCE_VOICE_DOWNLINK:
                      default:
                          return NO_INIT;
                  }
-                 ALOGV("mixer_ctl_set_enum_by_string, Input Source, (%s)", sourceName);
+                 ALOGV("mixer_ctl_set_enum_by_string, %s, (%s)", mixerName, sourceName);
                  TRACE_DRIVER_IN(DRV_MIXER_SEL)
                  mixer_ctl_set_enum_by_string(ctl, sourceName);
                  TRACE_DRIVER_OUT
