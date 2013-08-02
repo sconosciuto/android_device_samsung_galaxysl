@@ -127,8 +127,7 @@ on post-fs-data
     chmod 0777 /sys/devices/platform/omapdss/overlay2/enabled
 
 # wi-fi
-    mkdir /data/misc/wifi/sockets 0770 system wifi
-    mkdir /data/misc/softap 0770 system wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/dhcp 0770 dhcp dhcp
 
 # ril-logging
@@ -373,13 +372,6 @@ service tiwlan_nvs /system/bin/tiwlan_plts -n
 
 service wlan_ap_loader /system/bin/tiap_loader -i /system/etc/wifi/softap/tiwlan_ap.ini -f /system/etc/wifi/softap/ap_firmware.bin -e /data/misc/wifi/nvs_map.bin
     class main
-    disabled
-    oneshot
-
-service hostap_wrapper /system/bin/hostap_wrapper.sh
-    class main
-    group wifi system inet net_admin
-    socket tiap0 dgram 660 wifi wifi
     disabled
     oneshot
 
