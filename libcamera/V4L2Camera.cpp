@@ -114,54 +114,7 @@ int V4L2Camera::Open(const char *device)
         do {
             if ((camHandle = open(device, O_RDWR)) == -1) {
                 ALOGE("ERROR opening V4L interface: %s", strerror(errno));
-                if (version >= KERNEL_VERSION(2, 6, 37))
-                    reset_links(MEDIA_DEVICE);
                 return -1;
-            }
-            if (version >= KERNEL_VERSION(2,6,37)) {
-                ccdc_fd = open("/dev/v4l-subdev2", O_RDWR);
-                if (ccdc_fd == -1) {
-                    ALOGE("Error opening ccdc device");
-                    close(camHandle);
-                    reset_links(MEDIA_DEVICE);
-                    return -1;
-                }
-                fmt.pad = 0;
-                fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-                fmt.format.code = V4L2_MBUS_FMT_UYVY8_2X8;
-                fmt.format.width = IMG_WIDTH_VGA;
-                fmt.format.height = IMG_HEIGHT_VGA;
-                fmt.format.colorspace = V4L2_COLORSPACE_SMPTE170M;
-                fmt.format.field = V4L2_FIELD_INTERLACED;
-                ret = ioctl(ccdc_fd, VIDIOC_SUBDEV_S_FMT, &fmt);
-                if (ret < 0) {
-                    ALOGE("Failed to set format on pad");
-                }
-                memset(&fmt, 0, sizeof(fmt));
-                fmt.pad = 1;
-                fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-                fmt.format.code = V4L2_MBUS_FMT_UYVY8_2X8;
-                fmt.format.width = IMG_WIDTH_VGA;
-                fmt.format.height = IMG_HEIGHT_VGA;
-                fmt.format.colorspace = V4L2_COLORSPACE_SMPTE170M;
-                fmt.format.field = V4L2_FIELD_INTERLACED;
-                ret = ioctl(ccdc_fd, VIDIOC_SUBDEV_S_FMT, &fmt);
-                if (ret) {
-                    ALOGE("Failed to set format on pad");
-                }
-                mediaIn->input_source = 1;
-                if (mediaIn->input_source != 0)
-                    strcpy(subdev, "/dev/v4l-subdev8");
-                else
-                    strcpy(subdev, "/dev/v4l-subdev9");
-                tvp_fd = open(subdev, O_RDWR);
-                if (tvp_fd == -1) {
-                    ALOGE("Failed to open subdev");
-                    ret = -1;
-                    close(camHandle);
-                    reset_links(MEDIA_DEVICE);
-                    return ret;
-                }
             }
 
             ret = ioctl(camHandle, VIDIOC_QUERYCAP, &videoIn->cap);
@@ -316,24 +269,13 @@ int V4L2Camera::Configure(int width, int height, int pixelformat, int fps, int c
     /*dhiru1602 : use cam_mode to determine if the camera is in Preview or
             Capture mode */
     setFramerate(fps, cam_mode);
-    if (version >= KERNEL_VERSION(2,6,37)) {
-        videoIn->width = IMG_WIDTH_VGA;
-        videoIn->height = IMG_HEIGHT_VGA;
-        videoIn->framesizeIn = ((IMG_WIDTH_VGA * IMG_HEIGHT_VGA) << 1);
-        videoIn->formatIn = DEF_PIX_FMT;
-
-        videoIn->format.fmt.pix.width = IMG_WIDTH_VGA;
-        videoIn->format.fmt.pix.height = IMG_HEIGHT_VGA;
-        videoIn->format.fmt.pix.pixelformat = DEF_PIX_FMT;
-    } else {
-        videoIn->width = width;
-        videoIn->height = height;
-        videoIn->framesizeIn = ((width * height) << 1);
-        videoIn->formatIn = pixelformat;
-        videoIn->format.fmt.pix.width = width;
-        videoIn->format.fmt.pix.height = height;
-        videoIn->format.fmt.pix.pixelformat = pixelformat;
-    }
+    videoIn->width = width;
+    videoIn->height = height;
+    videoIn->framesizeIn = ((width * height) << 1);
+    videoIn->formatIn = pixelformat;
+    videoIn->format.fmt.pix.width = width;
+    videoIn->format.fmt.pix.height = height;
+    videoIn->format.fmt.pix.pixelformat = pixelformat;
     videoIn->format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     do {
         ret = ioctl(camHandle, VIDIOC_S_FMT, &videoIn->format);

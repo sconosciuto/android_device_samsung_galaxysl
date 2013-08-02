@@ -41,6 +41,7 @@
 #define CAMERA_FF 1
 
 #define PIX_YUV422I 0
+#define HAL_PIXEL_FORMAT_YUV     0x1B
 
 #define CAMHAL_GRALLOC_USAGE GRALLOC_USAGE_HW_TEXTURE | \
                              GRALLOC_USAGE_HW_RENDER | \
@@ -457,12 +458,12 @@ status_t CameraHardware::setPreviewWindow(preview_stream_ops *w)
     int preview_width;
     int preview_height;
     mParameters.getPreviewSize(&preview_width, &preview_height);
-    int hal_pixel_format = HAL_PIXEL_FORMAT_YV12;
+    int hal_pixel_format = HAL_PIXEL_FORMAT_YUV;
 
     const char *str_preview_format = mParameters.getPreviewFormat();
     ALOGV("%s: preview format %s", __func__, str_preview_format);
 
-    if (w->set_usage(w, GRALLOC_USAGE_SW_WRITE_OFTEN)) {
+    if (w->set_usage(w, CAMHAL_GRALLOC_USAGE)) {
         ALOGE("%s: could not set usage on gralloc buffer", __func__);
         return INVALID_OPERATION;
     }
@@ -576,7 +577,7 @@ int CameraHardware::previewThread()
     int index;
     nsecs_t timestamp;
     void *tempbuf;
-    int width, height, framesize_record, framesize_preview;
+    int width, height, framesize;
     int offset;
     int maxInterval = MAX_INTERVAL;
 
@@ -585,8 +586,7 @@ int CameraHardware::previewThread()
     if (height > 500 && mRecordingEnabled)
         maxInterval = MAX_INTERVAL * 3 / 2;
 
-    framesize_record = width * height * 2;
-    framesize_preview = width * height * 1.5;
+    framesize = width * height * 2;
 
     if (UNLIKELY(mDebugFps)) {
         showFPS("Preview");
@@ -594,7 +594,7 @@ int CameraHardware::previewThread()
 
     tempbuf = mCamera->GrabPreviewFrame(index);
 
-    offset = framesize_preview * index;
+    offset = framesize * index;
 
     if (mRecordingEnabled && buffersQueued > 6) {
         ALOGE("Buffers queued: %d", buffersQueued);
@@ -620,7 +620,7 @@ int CameraHardware::previewThread()
         void *vaddr;
         if (!mGrallocHal->lock(mGrallocHal,
                                *buf_handle,
-                               GRALLOC_USAGE_SW_WRITE_OFTEN,
+                               CAMHAL_GRALLOC_USAGE,
                                0, 0, width, height, &vaddr)) {
             if (mCameraID == CAMERA_FF) {
                 if (scale_process((void*)tempbuf, PREVIEW_WIDTH, PREVIEW_HEIGHT, (void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1)) {
@@ -641,9 +641,9 @@ int CameraHardware::previewThread()
                     ALOGE("Error in Rotation 90");
 
                 }
-                yuv422_to_YV12((unsigned char *)mFrameScaled->data,(unsigned char *)vaddr, width, height, stride);
+                memcpy((unsigned char *)vaddr, (unsigned char *)mFrameScaled->data, framesize);
             } else
-                yuv422_to_YV12((unsigned char *)tempbuf,(unsigned char *)vaddr, width, height, stride);
+                memcpy((unsigned char *)vaddr, (unsigned char *)tempbuf, framesize);
 
             mGrallocHal->unlock(mGrallocHal, *buf_handle);
         } else
@@ -665,7 +665,7 @@ callbacks:
             else
                 Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data + offset, width, height);
         } else {
-            memcpy((unsigned char*)mPreviewHeap->data + offset, (unsigned char *)tempbuf, framesize_record);
+            memcpy((unsigned char*)mPreviewHeap->data + offset, (unsigned char *)tempbuf, framesize);
         }
         mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewHeap, index, NULL, mCallbackCookie);
     }
@@ -673,9 +673,9 @@ callbacks:
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
         if (mCameraID == CAMERA_FF)
-            memcpy(mRecordHeap[index]->data, mFrameScaled->data, framesize_record);
+            memcpy(mRecordHeap[index]->data, mFrameScaled->data, framesize);
         else
-            memcpy(mRecordHeap[index]->data, tempbuf, framesize_record);
+            memcpy(mRecordHeap[index]->data, tempbuf, framesize);
         buffersQueued++;
         //mRecordBufferState[index] = 1;
 
