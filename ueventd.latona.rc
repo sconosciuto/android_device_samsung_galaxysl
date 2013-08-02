@@ -18,6 +18,9 @@
 /dev/pvrsrvkm		0666	system		system
 /dev/usb_mtp_gadget	0660	system		system
 /dev/fmradio		0660	system		system
+/dev/ion		0777	system		system
+/dev/dsscomp		0666	system		system
+/dev/tiler		0666	system		system
 
 # ondemandboost
 /sys/devices/system/cpu/cpufreq ondemandboost/boostfreq   0664    system  system
