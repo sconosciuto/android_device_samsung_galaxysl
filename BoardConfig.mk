@@ -41,7 +41,7 @@ BOARD_PAGE_SIZE := 4096
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/galaxysl/shbootimg.mk
 
 # Inline kernel building config
-TARGET_KERNEL_CONFIG := latona_galaxysl_defconfig
+TARGET_KERNEL_CONFIG := latona_defconfig
 TARGET_KERNEL_SOURCE := kernel/samsung/latona
 
 # recovery
