@@ -221,10 +221,6 @@ include frameworks/native/build/phone-hdpi-512-dalvik-heap.mk
 # PRODUCT_LOCALES expansion must not be a density.
 PRODUCT_AAPT_CONFIG := normal hdpi
 
-# copy wifi module
-PRODUCT_COPY_FILES += \
-	device/samsung/galaxysl/modules/tiwlan_drv.ko:system/lib/modules/tiwlan_drv.ko
-
 # copy the filesystem converter
 PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/updater.sh:updater.sh

@@ -47,9 +47,6 @@ on fs
 
     mount debugfs debugfs /debug
 
-    # additional kernel modules
-    insmod /system/lib/modules/vibetonz.ko
-
 on post-fs
     # symlink for SamsungRIL
     symlink /radio/modem.bin /dev/block/bml13
