@@ -1052,7 +1052,7 @@ static int omap3_hwc_prepare(struct hwc_composer_device *dev, hwc_layer_list_t* 
             if (hwc_dev->use_sgx)
                 layer->hints |= HWC_HINT_CLEAR_FB;
             /* see if any of the (non-backmost) overlays are doing blending */
-            else if (is_BLENDED(layer) && i > 0)
+            else if (is_BLENDED(layer->blending) && i > 0)
                 hwc_dev->ovls_blending = 1;
 
             hwc_dev->buffers[dsscomp->num_ovls] = handle;
