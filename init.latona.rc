@@ -304,12 +304,6 @@ on boot
 # Touchscreen: bootcomplete
     write /sys/touchscreen/bootcomplete 1
 
-# Fix wifi MAC address
-service fix_mac /system/bin/sh /system/bin/fix_mac.sh
-    class main
-    user root
-    oneshot
-
 # 3D init
 service pvrsrvinit /system/bin/pvrsrvinit
     class core
