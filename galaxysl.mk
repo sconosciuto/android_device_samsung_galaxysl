@@ -146,10 +146,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/libaudio/audio_policy.conf:system/etc/audio_policy.conf
 
-# SGX config file
-PRODUCT_COPY_FILES += \
-	device/samsung/galaxysl/etc/powervr.ini:system/etc/powervr.ini
-
 #Camera
 PRODUCT_PACKAGES += camera.latona
 
