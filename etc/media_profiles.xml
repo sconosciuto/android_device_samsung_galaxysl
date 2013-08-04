@@ -97,20 +97,20 @@
                  frameRate="30" />
 
           <Audio codec="aac"
-                 bitRate="24000"
+                 bitRate="96000"
                  sampleRate="16000"
                  channels="1" />
       </EncoderProfile>
 
         <EncoderProfile quality="480p" fileFormat="mp4" duration="60">
-            <Video codec="h264"
-                   bitRate="3000000"
+            <Video codec="m4v"
+                   bitRate="10000000"
                    width="720"
                    height="480"
                    frameRate="30" />
 
             <Audio codec="aac"
-                   bitRate="24000"
+                   bitRate="96000"
                    sampleRate="16000"
                    channels="1" />
         </EncoderProfile>

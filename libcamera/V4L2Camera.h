@@ -127,6 +127,10 @@ public:
 	int setSharpness(int sharpness_value);
 	int setSaturation(int saturation_value);
 	int getSaturation(void);
+	int setImageEffect(int);
+	int getImageEffect(void);
+	int setJpegQuality(int jpeg_quality);
+	int getJpegQuality(void);
 
 
     void * GrabPreviewFrame (int& index);
@@ -153,6 +157,8 @@ private:
     int mSaturation;
     int mBrightness;
     int mAutofocusRunning;
+    int mEffect;
+    int mJpegQuality;
 
     int nQueued;
     int nDequeued;

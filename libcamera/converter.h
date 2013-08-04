@@ -19,7 +19,7 @@
 #ifndef CONVERTER_H
 #define CONVERTER_H
 
-void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, int height);
+void yuv422_to_YV12(unsigned char *bufsrc, unsigned char *bufdest, int width, int height, int stride);
 void yuyv422_to_yuv420(unsigned char *bufsrc, unsigned char *bufdest, int width, int height);
 void yuyv422_to_yuv420sp(unsigned char *bufsrc, unsigned char *bufdest, int width, int height);
 void yuyv422_to_yuv422sp(unsigned char *bufsrc, unsigned char *bufdest, int width, int height);
