@@ -76,15 +76,6 @@ PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/etc/audio/codec/VtCallSpk.ini:system/etc/audio/codec/VtCallSpk.ini \
 	device/samsung/galaxysl/etc/audio/codec/VtCallSpkAmp.ini:system/etc/audio/codec/VtCallSpkAmp.ini
 
-# wifi configuration files
-PRODUCT_COPY_FILES += \
-    device/samsung/galaxysl/etc/wifi/firmware.bin:system/etc/wifi/firmware.bin \
-    device/samsung/galaxysl/etc/wifi/tiwlan_plt.ini:system/etc/wifi/tiwlan_plt.ini \
-    device/samsung/galaxysl/etc/wifi/softap/ap_firmware.bin:system/etc/wifi/softap/ap_firmware.bin \
-    device/samsung/galaxysl/etc/wifi/softap/hostapd.conf:system/etc/wifi/softap/hostapd.conf \
-    device/samsung/galaxysl/etc/wifi/softap/tiwlan_ap.ini:system/etc/wifi/softap/tiwlan_ap.ini \
-    device/samsung/galaxysl/etc/wifi/tiwlan.ini:system/etc/wifi/tiwlan.ini
- 
 # configuration files
 PRODUCT_COPY_FILES += \
     device/samsung/galaxysl/etc/media_profiles.xml:system/etc/media_profiles.xml \
@@ -181,7 +172,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
 # Note that the only such settings should be the ones that are too low-level to
 # be reachable from resources or other mechanisms.
 PRODUCT_PROPERTY_OVERRIDES += \
-       wifi.interface=tiwlan0 \
+       wifi.interface=wlan0 \
        wifi.supplicant_scan_interval=180 \
        ro.telephony.ril_class=SamsungRIL \
        ro.telephony.ril.v3=icccardstatus,datacall,signalstrength,facilitylock \
