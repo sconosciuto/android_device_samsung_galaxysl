@@ -51,33 +51,33 @@ if /tmp/busybox test -e /dev/block/bml7 ; then
     # we're running on a bml device
 
     # make sure sdcard is mounted
-    check_mount /mnt/emmc $SD_PART vfat
+    check_mount /mnt/sdcard $SD_PART vfat
 
-    # everything is logged into /mnt/emmc/cyanogenmod_bml.log
-    set_log /mnt/emmc/cyanogenmod_bml.log
+    # everything is logged into /mnt/sdcard/cyanogenmod_bml.log
+    set_log /mnt/sdcard/cyanogenmod_bml.log
 
     if $IS_GSM ; then
         # make sure efs is mounted
         check_mount /efs /dev/block/stl3 rfs
 
         # create a backup of efs
-        if /tmp/busybox test -e /mnt/emmc/backup/efs ; then
-            /tmp/busybox mv /mnt/emmc/backup/efs /mnt/emmc/backup/efs-$$
+        if /tmp/busybox test -e /mnt/sdcard/backup/efs ; then
+            /tmp/busybox mv /mnt/sdcard/backup/efs /mnt/sdcard/backup/efs-$$
         fi
-        /tmp/busybox rm -rf /mnt/emmc/backup/efs
+        /tmp/busybox rm -rf /mnt/sdcard/backup/efs
 
-        /tmp/busybox mkdir -p /mnt/emmc/backup/efs
-        /tmp/busybox cp -R /efs/ /mnt/emmc/backup
+        /tmp/busybox mkdir -p /mnt/sdcard/backup/efs
+        /tmp/busybox cp -R /efs/ /mnt/sdcard/backup
     fi
 
     # write the package path to sdcard cyanogenmod.cfg
     if /tmp/busybox test -n "$UPDATE_PACKAGE" ; then
         PACKAGE_LOCATION=${UPDATE_PACKAGE#/mnt}
-        /tmp/busybox echo "$PACKAGE_LOCATION" > /mnt/emmc/cyanogenmod.cfg
+        /tmp/busybox echo "$PACKAGE_LOCATION" > /mnt/sdcard/cyanogenmod.cfg
     fi
 
     # Scorch any ROM Manager settings to require the user to reflash recovery
-    /tmp/busybox rm -f /mnt/emmc/clockworkmod/.settings
+    /tmp/busybox rm -f /mnt/sdcard/clockworkmod/.settings
 
     # write new kernel to boot partition
     /tmp/flash_image boot /tmp/boot.img
@@ -93,10 +93,10 @@ elif /tmp/busybox test -e /dev/block/mtdblock0 ; then
     # we're running on a mtd (current) device
 
     # make sure sdcard is mounted
-    check_mount /emmc $SD_PART vfat
+    check_mount /sdcard $SD_PART vfat
 
-    # everything is logged into /emmc/cyanogenmod.log
-    set_log /emmc/cyanogenmod_mtd.log
+    # everything is logged into /sdcard/cyanogenmod.log
+    set_log /sdcard/cyanogenmod_mtd.log
 
     if $IS_GSM ; then
         # create mountpoint for radio partition
@@ -127,7 +127,7 @@ elif /tmp/busybox test -e /dev/block/mtdblock0 ; then
         /tmp/busybox umount -l /radio
     fi
 
-    if ! /tmp/busybox test -e /emmc/cyanogenmod.cfg ; then
+    if ! /tmp/busybox test -e /sdcard/cyanogenmod.cfg ; then
         # update install - flash boot image then skip back to updater-script
         # (boot image is already flashed for first time install or old mtd upgrade)
 
@@ -144,7 +144,7 @@ elif /tmp/busybox test -e /dev/block/mtdblock0 ; then
     # let's format the volumes and restore modem and efs
 
     # remove the cyanogenmod.cfg to prevent this from looping
-    /tmp/busybox rm -f /emmc/cyanogenmod.cfg
+    /tmp/busybox rm -f /sdcard/cyanogenmod.cfg
 
     # unmount and format system (recovery seems to expect system to be unmounted)
     # unmount and format data
@@ -159,7 +159,7 @@ elif /tmp/busybox test -e /dev/block/mtdblock0 ; then
 
     if $IS_GSM ; then
         # restore efs backup
-        if /tmp/busybox test -e /emmc/backup/efs/nv_data.bin ; then
+        if /tmp/busybox test -e /sdcard/backup/efs/nv_data.bin ; then
             /tmp/busybox umount -l /efs
             /tmp/erase_image efs
             /tmp/busybox mkdir -p /efs
@@ -171,7 +171,7 @@ elif /tmp/busybox test -e /dev/block/mtdblock0 ; then
                 fi
             fi
 
-            /tmp/busybox cp -R /emmc/backup/efs /
+            /tmp/busybox cp -R /sdcard/backup/efs /
             /tmp/busybox umount -l /efs
         else
             /tmp/busybox echo "Cannot restore efs."

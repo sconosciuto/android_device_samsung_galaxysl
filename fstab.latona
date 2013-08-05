@@ -9,7 +9,7 @@ radio                   /radio        mtd        defaults                       
 system                  /system       yaffs2     defaults                                               recoveryonly
 /dev/block/mmcblk0p2    /cache        ext4       defaults                                               recoveryonly
 /dev/block/mmcblk0p3    /data         ext4       defaults                                               recoveryonly
-/dev/block/mmcblk0p1    /emmc         vfat       defaults                                               recoveryonly,lun=/sys/devices/platform/omap/musb-omap2430/musb-hdrc/gadget/lun0/file
+/dev/block/mmcblk0p1    /sdcard       vfat       defaults                                               recoveryonly,lun=/sys/devices/platform/omap/musb-omap2430/musb-hdrc/gadget/lun0/file
 /dev/block/mmcblk1p1    /external_sd  vfat       defaults                                               recoveryonly,lun=/sys/devices/platform/omap/musb-omap2430/musb-hdrc/gadget/lun1/file
 
 /dev/block/mmcblk0p2    /cache        ext4       noatime,nosuid,nodev,nomblk_io_submit,errors=panic     wait

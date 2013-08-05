@@ -27,10 +27,10 @@ elif ! busybox test -e /system/build.prop ; then
 	busybox mount -t ext4 /dev/block/mmcblk0p2 /cache
 	busybox mkdir /cache/recovery
 
-	busybox mkdir -p /emmc
-	busybox mount -t vfat /dev/block/mmcblk0p1 /emmc
+	busybox mkdir -p /sdcard
+	busybox mount -t vfat /dev/block/mmcblk0p1 /sdcard
 
-	UPDATE=$(busybox cat /emmc/cyanogenmod.cfg)
+	UPDATE=$(busybox cat /sdcard/cyanogenmod.cfg)
 
 	if busybox test -n "$UPDATE" && busybox test -e "$UPDATE"; then
 		busybox echo "install_zip(\"`echo $UPDATE`\");" > /cache/recovery/extendedcommand
@@ -38,7 +38,7 @@ elif ! busybox test -e /system/build.prop ; then
 
 	RAMDISK=ramdisk-recovery.cpio.gz
 
-	busybox umount /emmc
+	busybox umount /sdcard
 fi
 
 busybox umount /system
