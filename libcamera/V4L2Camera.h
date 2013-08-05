@@ -25,6 +25,10 @@
 #define STATE_PREVIEW      0
 #define STATE_PICTURE      1
 
+#define MODE_CAMERA        1
+#define MODE_CAMCORDER     2
+#define MODE_VT            3
+
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
 #include <linux/videodev.h>
@@ -134,6 +138,8 @@ public:
 	int getImageEffect(void);
 	int setJpegQuality(int jpeg_quality);
 	int getJpegQuality(void);
+	int setCamMode(int cam_mode);
+	int getCamMode(void);
 
 
     void * GrabPreviewFrame (int& index);
@@ -162,6 +168,7 @@ private:
     int mAutofocusRunning;
     int mEffect;
     int mJpegQuality;
+    int mCamMode;
 
     int nQueued;
     int nDequeued;

@@ -91,6 +91,7 @@ V4L2Camera::V4L2Camera ()
     mAutofocusRunning = 0;
     mEffect = -1;
     mJpegQuality = -1;
+    mCamMode = MODE_CAMERA;
 
 #ifdef _OMAP_RESIZER_
     videoIn->resizeHandle = -1;
@@ -290,13 +291,40 @@ int V4L2Camera::Configure(int width, int height, int pixelformat, int fps, int c
     return ret;
 }
 
+int V4L2Camera::setCamMode(int cam_mode)
+{
+    switch (cam_mode) {
+    case MODE_CAMERA:
+        ALOGV("%s: MODE_CAMERA(%d)", __func__, cam_mode);
+        mCamMode = MODE_CAMERA;
+        break;
+    case MODE_CAMCORDER:
+        ALOGV("%s: MODE_CAMCORDER(%d)", __func__, cam_mode);
+        mCamMode = MODE_CAMCORDER;
+        break;
+    case MODE_VT:
+        ALOGV("%s: MODE_VT(%d)", __func__, cam_mode);
+        mCamMode = MODE_VT;
+        break;
+    default:
+        ALOGE("%s: mode %d no supported", __func__, cam_mode);
+        return -1;
+    }
+    return 0;
+}
+
+int V4L2Camera::getCamMode(void)
+{
+    return mCamMode;
+}
+
 int V4L2Camera::setFramerate(int framerate, int cam_state)
 {
     int ret;
     struct v4l2_streamparm parm;
 
     parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    parm.parm.capture.capturemode = 1;
+    parm.parm.capture.capturemode = mCamMode;
     if (cam_state == STATE_PREVIEW)
         parm.parm.capture.currentstate = V4L2_MODE_PREVIEW;
     else

@@ -824,6 +824,8 @@ status_t CameraHardware::startRecording()
     ALOGE("startRecording");
     Mutex::Autolock lock(mRecordingLock);
 
+    mCamera->setCamMode(MODE_CAMCORDER);
+
     buffersQueued = 0;
 
     mRecordingEnabled = true;
@@ -844,6 +846,8 @@ void CameraHardware::stopRecording()
         }*/
         mRecordingEnabled = false;
     }
+
+    mCamera->setCamMode(MODE_CAMERA);
 }
 
 bool CameraHardware::recordingEnabled()
