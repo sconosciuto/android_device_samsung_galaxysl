@@ -90,7 +90,6 @@ endif
 
 # Audio
 BOARD_USES_GENERIC_AUDIO := false
-BOARD_USES_AUDIO_LEGACY := false
 
 # FM Radio
 BOARD_HAVE_FM_RADIO := true
