@@ -390,8 +390,8 @@ ret:
 
 CameraHardware::~CameraHardware()
 {
-    mCamera->Uninit(0);
-    mCamera->StopStreaming(0);
+    mCamera->Uninit(STATE_PREVIEW);
+    mCamera->StopStreaming(STATE_PREVIEW);
     mCamera->Close();
     if (neon_args) {
         free((NEON_FUNCTION_ARGS*)neon_args);
@@ -764,13 +764,13 @@ status_t CameraHardware::startPreviewInternal()
         mFrameScaled = mRequestMemory(-1, mFrameSize, 1, NULL);
     }
 
-    ret = mCamera->Configure(mPreviewWidth, mPreviewHeight, PIXEL_FORMAT, fps, 0);
+    ret = mCamera->Configure(mPreviewWidth, mPreviewHeight, PIXEL_FORMAT, fps, STATE_PREVIEW);
     if (ret < 0) {
         ALOGE("Fail to configure camera device");
         return INVALID_OPERATION;
     }
 
-    ret = mCamera->BufferMap(0);
+    ret = mCamera->BufferMap(STATE_PREVIEW);
     if (ret) {
         ALOGE("Camera Init fail: %s", strerror(errno));
         return UNKNOWN_ERROR;
@@ -779,7 +779,7 @@ status_t CameraHardware::startPreviewInternal()
     ret = mCamera->StartStreaming(0);
     if (ret) {
         ALOGE("Camera StartStreaming fail: %s", strerror(errno));
-        mCamera->Uninit(0);
+        mCamera->Uninit(STATE_PREVIEW);
         mCamera->Close();
         return UNKNOWN_ERROR;
     }
@@ -985,12 +985,12 @@ int CameraHardware::pictureThread()
         fps = 15;
         pixelformat = PIXEL_FORMAT;
     }
-    ret = mCamera->Configure(width, height, pixelformat, fps, 1);
+    ret = mCamera->Configure(width, height, pixelformat, fps, STATE_PICTURE);
     if (ret < 0) {
         ALOGE("Fail to configure camera device");
         return INVALID_OPERATION;
     }
-    ret = mCamera->BufferMap(1);
+    ret = mCamera->BufferMap(STATE_PICTURE);
     if (ret) {
         ALOGE("Camera BufferMap fail: %s", strerror(errno));
         return UNKNOWN_ERROR;
@@ -999,7 +999,7 @@ int CameraHardware::pictureThread()
     ret = mCamera->StartStreaming(1);
     if (ret) {
         ALOGE("Camera StartStreaming fail: %s", strerror(errno));
-        mCamera->Uninit(1);
+        mCamera->Uninit(STATE_PICTURE);
         mCamera->Close();
         return UNKNOWN_ERROR;
     }
@@ -1079,8 +1079,8 @@ int CameraHardware::pictureThread()
     }
 
     /* Close operation */
-    mCamera->Uninit(1);
-    mCamera->StopStreaming(1);
+    mCamera->Uninit(STATE_PICTURE);
+    mCamera->StopStreaming(STATE_PICTURE);
 
     ALOGV("End pictureThread()");
     return NO_ERROR;
@@ -1535,7 +1535,7 @@ void CameraHardware::release()
         mFrameScaled->release(mFrameScaled);
         mFrameScaled = NULL;
     }
-    mCamera->Uninit(0);
+    mCamera->Uninit(STATE_PREVIEW);
     if ((mCameraID == CAMERA_FF) && (isStart_scaler))
         scale_deinit();
     mCamera->Close();

@@ -22,6 +22,9 @@
 #define NB_BUFFER 6
 #define DEFAULT_FRAME_RATE 30
 
+#define STATE_PREVIEW      0
+#define STATE_PICTURE      1
+
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
 #include <linux/videodev.h>

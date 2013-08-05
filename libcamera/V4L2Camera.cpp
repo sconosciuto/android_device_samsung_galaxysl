@@ -261,14 +261,14 @@ int V4L2Camera::Open_media_device(const char *device)
     return 0;
 }
 
-int V4L2Camera::Configure(int width, int height, int pixelformat, int fps, int cam_mode)
+int V4L2Camera::Configure(int width, int height, int pixelformat, int fps, int cam_state)
 {
     int ret = 0;
     struct v4l2_streamparm parm;
 
-    /*dhiru1602 : use cam_mode to determine if the camera is in Preview or
+    /*dhiru1602 : use cam_state to determine if the camera is in Preview or
             Capture mode */
-    setFramerate(fps, cam_mode);
+    setFramerate(fps, cam_state);
     videoIn->width = width;
     videoIn->height = height;
     videoIn->framesizeIn = ((width * height) << 1);
@@ -290,14 +290,14 @@ int V4L2Camera::Configure(int width, int height, int pixelformat, int fps, int c
     return ret;
 }
 
-int V4L2Camera::setFramerate(int framerate, int cam_mode)
+int V4L2Camera::setFramerate(int framerate, int cam_state)
 {
     int ret;
     struct v4l2_streamparm parm;
 
     parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     parm.parm.capture.capturemode = 1;
-    if (cam_mode == 0)
+    if (cam_state == STATE_PREVIEW)
         parm.parm.capture.currentstate = V4L2_MODE_PREVIEW;
     else
         parm.parm.capture.currentstate = V4L2_MODE_CAPTURE;
@@ -311,12 +311,12 @@ int V4L2Camera::setFramerate(int framerate, int cam_mode)
     return 0;
 }
 
-int V4L2Camera::BufferMap(int cam_mode)
+int V4L2Camera::BufferMap(int cam_state)
 {
     int ret, mMaxBuffers;
 
     //dhiru1602: If the camera is in Capture Mode, use only a Single Buffer
-    if (cam_mode == 0)
+    if (cam_state == STATE_PREVIEW)
         mMaxBuffers = NB_BUFFER;
     else
         mMaxBuffers = 1;
@@ -444,12 +444,12 @@ int V4L2Camera::init_parm()
     return 0;
 }
 
-void V4L2Camera::Uninit(int cam_mode)
+void V4L2Camera::Uninit(int cam_state)
 {
     int ret, mMaxBuffers;
     if (m_flag_init) {
         //dhiru1602: If the camera is in Capture Mode, use only a Single Buffer
-        if (cam_mode == 0)
+        if (cam_state == STATE_PREVIEW)
             mMaxBuffers = NB_BUFFER;
         else
             mMaxBuffers = 1;
@@ -475,7 +475,7 @@ void V4L2Camera::Uninit(int cam_mode)
     return;
 }
 
-int V4L2Camera::StartStreaming(int cam_mode)
+int V4L2Camera::StartStreaming(int cam_state)
 {
     enum v4l2_buf_type type;
     struct v4l2_control vc;
@@ -490,19 +490,19 @@ int V4L2Camera::StartStreaming(int cam_mode)
             return ret;
         }
 
-        if (cam_mode == 0)
+        if (cam_state == STATE_PREVIEW)
             videoIn->isStreaming = true;
     }
 
     return 0;
 }
 
-int V4L2Camera::StopStreaming(int cam_mode)
+int V4L2Camera::StopStreaming(int cam_state)
 {
     enum v4l2_buf_type type;
     int ret;
 
-    if (videoIn->isStreaming || cam_mode == 1) {
+    if (videoIn->isStreaming || cam_state == STATE_PICTURE) {
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
         ret = ioctl(camHandle, VIDIOC_STREAMOFF, &type);
