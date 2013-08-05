@@ -137,10 +137,10 @@ PRODUCT_PACKAGES += \
     utility_make_ext4fs \
     make_ext4fs
 
-# ICS sound
+# Audio
 PRODUCT_PACKAGES += \
 	libaudioutils audio.a2dp.default \
-	libaudiohw_legacy audio.primary.omap3 audio.usb.default
+	audio.primary.omap3 audio.usb.default
 
 PRODUCT_COPY_FILES += \
 	device/samsung/galaxysl/libaudio/audio_policy.conf:system/etc/audio_policy.conf
