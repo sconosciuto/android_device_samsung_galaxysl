@@ -13,3 +13,9 @@ ro.cwm.repeatable_keys=115,114,158
 
 # Disable zram
 ro.zram.default=0
+
+# Disable scissor optimization for better performance
+ro.hwui.disable_scissor_opt=true
+
+# GPU producer to CPU consumer not supported
+ro.bq.gpu_to_cpu_unsupported=1

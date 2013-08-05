@@ -3,5 +3,17 @@
 # The filesystem that contains the filesystem checker binary (typically /system) cannot
 # specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
 
-/dev/block/mmcblk0p2    /cache        ext4       noatime,nosuid,nodev,nomblk_io_submit,errors=panic      wait
-/dev/block/mmcblk0p3    /data         ext4       noatime,nosuid,nodev,nomblk_io_submit,errors=panic      wait
+boot                    /boot         mtd        defaults                                               recoveryonly
+recovery                /recovery     mtd        defaults                                               recoveryonly
+radio                   /radio        mtd        defaults                                               recoveryonly
+system                  /system       yaffs2     defaults                                               recoveryonly
+/dev/block/mmcblk0p2    /cache        ext4       defaults                                               recoveryonly
+/dev/block/mmcblk0p3    /data         ext4       defaults                                               recoveryonly
+/dev/block/mmcblk0p1    /emmc         vfat       defaults                                               recoveryonly,lun=/sys/devices/platform/omap/musb-omap2430/musb-hdrc/gadget/lun0/file
+/dev/block/mmcblk1p1    /external_sd  vfat       defaults                                               recoveryonly,lun=/sys/devices/platform/omap/musb-omap2430/musb-hdrc/gadget/lun1/file
+
+/dev/block/mmcblk0p2    /cache        ext4       noatime,nosuid,nodev,nomblk_io_submit,errors=panic     wait
+/dev/block/mmcblk0p3    /data         ext4       noatime,nosuid,nodev,nomblk_io_submit,errors=panic     wait
+
+/devices/platform/omap/omap_hsmmc.1/mmc_host/mmc0    /storage/sdcard0    auto    defaults    voldmanaged=sdcard0:1,nonremovable
+/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc1    /storage/sdcard1    auto    defaults    voldmanaged=sdcard1:auto

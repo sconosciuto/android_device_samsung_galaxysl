@@ -15,8 +15,7 @@
 # These are the hardware-specific configuration files
 PRODUCT_COPY_FILES := \
 	device/samsung/galaxysl/etc/gps.conf:system/etc/gps.conf \
-	device/samsung/galaxysl/etc/gps.xml:system/vendor/etc/gps.xml \
-	device/samsung/galaxysl/etc/vold.fstab:system/etc/vold.fstab
+	device/samsung/galaxysl/etc/gps.xml:system/vendor/etc/gps.xml
 
 # Init files
 PRODUCT_COPY_FILES += \
@@ -136,6 +135,12 @@ PRODUCT_PACKAGES += \
     bml_over_mtd \
     utility_make_ext4fs \
     make_ext4fs
+
+# Support for Browser's saved page feature. This allows
+# for pages saved on previous versions of the OS to be
+# viewed on the current OS.
+PRODUCT_PACKAGES += \
+    libskia_legacy
 
 # Audio
 PRODUCT_PACKAGES += \

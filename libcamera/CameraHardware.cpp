@@ -27,7 +27,6 @@
 #include <cutils/native_handle.h>
 #include <hal_public.h>
 #include <ui/GraphicBufferMapper.h>
-#include <gui/ISurfaceTexture.h>
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define VIDEO_DEVICE_2      "/dev/video5"
