@@ -722,8 +722,7 @@ status_t CameraHardware::startPreviewInternal()
 {
     int ret = 0;
     int fps = mParameters.getPreviewFrameRate();
-    int mRecordingFrameSize;
-    int mPreviewFrameSize;
+    int mFrameSize;
 
     mParameters.getPreviewSize(&mPreviewWidth, &mPreviewHeight);
     ALOGD("startPreview width:%d,height:%d", mPreviewWidth, mPreviewHeight);
@@ -732,14 +731,13 @@ status_t CameraHardware::startPreviewInternal()
         return INVALID_OPERATION;
     }
 
-    mPreviewFrameSize = mPreviewWidth * mPreviewHeight * 1.5;
-    mRecordingFrameSize = mPreviewWidth * mPreviewHeight * 2;
+    mFrameSize = mPreviewWidth * mPreviewHeight * 2;
 
     if (mPreviewHeap) {
         mPreviewHeap->release(mPreviewHeap);
         mPreviewHeap = NULL;
     }
-    mPreviewHeap = mRequestMemory(-1, mPreviewFrameSize, NB_BUFFER, NULL);
+    mPreviewHeap = mRequestMemory(-1, mFrameSize, NB_BUFFER, NULL);
 
     for (int i = 0; i < NB_BUFFER; i++) {
         if (mRecordHeap[i] != NULL) {
@@ -747,7 +745,7 @@ status_t CameraHardware::startPreviewInternal()
             mRecordHeap[i] = 0;
         }
         //mRecordBufferState[i] = 0;
-        mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+        mRecordHeap[i] = mRequestMemory(-1, mFrameSize, 1, NULL);
     }
 
     if (mCameraID == CAMERA_FF) {
@@ -757,13 +755,13 @@ status_t CameraHardware::startPreviewInternal()
             mScaleHeap->release(mScaleHeap);
             mScaleHeap = NULL;
         }
-        mScaleHeap = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+        mScaleHeap = mRequestMemory(-1, mFrameSize, 1, NULL);
 
         if (mFrameScaled) {
             mFrameScaled->release(mFrameScaled);
             mFrameScaled = NULL;
         }
-        mFrameScaled = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
+        mFrameScaled = mRequestMemory(-1, mFrameSize, 1, NULL);
     }
 
     ret = mCamera->Configure(mPreviewWidth, mPreviewHeight, PIXEL_FORMAT, fps, 0);
