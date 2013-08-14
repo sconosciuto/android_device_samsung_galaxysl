@@ -32,7 +32,7 @@
 #define MAX_BUF_SZ  10
 
 /* initialize to something safe */
-static char screen_off_max_freq[MAX_BUF_SZ] = "800000";
+static char screen_off_max_freq[MAX_BUF_SZ] = "600000";
 static char scaling_max_freq[MAX_BUF_SZ] = "1000000";
 
 struct latona_power_module {
@@ -109,8 +109,6 @@ static int boostpulse_open(struct latona_power_module *latona)
 
 static void latona_power_set_interactive(struct power_module *module, int on)
 {
-    return;
-
     int len;
 
     char buf[MAX_BUF_SZ];
