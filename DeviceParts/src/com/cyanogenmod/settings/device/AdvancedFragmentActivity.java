@@ -25,8 +25,6 @@ import com.cyanogenmod.settings.device.R;
 
 public class AdvancedFragmentActivity extends PreferenceFragment {
 
-    private FSync mFSync;
-    private BatteryWorkDelay mBatteryWorkDelay;
     private CpuBoostFreq mCpuBoostFreq;
 
     @Override
@@ -34,12 +32,6 @@ public class AdvancedFragmentActivity extends PreferenceFragment {
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.advanced_preferences);
-
-        mFSync = (FSync) findPreference(DeviceSettings.KEY_FSYNC);
-        mFSync.setEnabled(FSync.isSupported());
-
-        mBatteryWorkDelay = (BatteryWorkDelay) findPreference(DeviceSettings.KEY_BATTERY_WORK_DELAY);
-        mBatteryWorkDelay.setEnabled(BatteryWorkDelay.isSupported());
 
         mCpuBoostFreq = (CpuBoostFreq) findPreference(DeviceSettings.KEY_CPU_BOOST_FREQ);
         if(!CpuBoostFreq.isSupported()) {

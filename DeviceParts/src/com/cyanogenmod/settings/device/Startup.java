@@ -29,9 +29,6 @@ public class Startup extends BroadcastReceiver {
         VibratorIntensity.restore(context);
         TouchscreenSensitivity.restore(context);
         TouchkeysSensitivity.restore(context);
-        FSync.restore(context);
-        BatteryWorkDelay.restore(context);
         CpuBoostFreq.restore(context);
-        SvnetWakelockTimeout.restore(context);
     }
 }

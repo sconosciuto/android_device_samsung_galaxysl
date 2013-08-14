@@ -19,9 +19,6 @@
     <string name="touchscreen_sensitivity_summary_head">Set touch panel sensitivity</string>
     <string name="touchscreen_sensitivity_seekbar_title">Sensitivity</string>
 
-    <string name="touchscreen_disable_calibration_title_head">Manual calibration</string>
-    <string name="touchscreen_disable_calibration_summary_head">Press simultaneously the volume keys to calibrate the touchscreen</string>
-
     <!-- Touchkeys -->
     <string name="touchkeys_subcat_title">Touchkeys</string>
     <string name="touchkeys_sensitivity_title_head">Touchkeys sensitivity</string>
@@ -57,23 +54,5 @@
     <string name="cpu_boost_freq_title_head">Boost</string>
     <string name="cpu_boost_freq_summary_head">Change boosting freq</string>
     <string name="cpu_boost_freq_notsupported">CPU governor not supported</string>
-
-    <!-- FSync -->
-    <string name="fsync_subcat_title">FSync</string>
-    <string name="fsync_title_head">Disable FSync</string>
-    <string name="fsync_summary_head">Improve performance, but it can cause data corruption</string>
-
-    <!-- WakeLocks -->
-    <string name="wakelocks_subcat_title">WakeLocks</string>
-
-    <string name="battery_delay_title_head">Battery monitor</string>
-    <string name="battery_delay_summary_head">Adjust the duration of samsung-battery</string>
-    <string name="battery_delay_seekbar_title">WakeLock duration</string>
-    <string name="seekbar_additional_information_battery">Too short intervals could increase the awake time</string>
-
-    <string name="svnet_wakelock_title_head">Mobile data</string>
-    <string name="svnet_wakelock_summary_head">Adjust the duration of svnet</string>
-    <string name="svnet_wakelock_seekbar_title">WakeLock duration</string>
-    <string name="seekbar_additional_information_svnet">Too short intervals could cause sync issues</string>
 
 </resources>

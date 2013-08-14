@@ -83,11 +83,6 @@ public class TouchscreenSensitivity extends DialogPreference implements OnClickL
         String value = String.format("%03d", sharedPrefs.getInt(SETTING_KEY, DEFAULT_VALUE));
         Utils.writeValue(FILE_PATH, KEY_VALUE + value);
         applyChanges();
-
-        if(sharedPrefs.getBoolean(DeviceSettings.KEY_TOUCHSCREEN_DISABLE_CALIBRATION, false))
-            Utils.writeValue("/sys/touchscreen/disable_calibration", "1");
-        else
-            Utils.writeValue("/sys/touchscreen/disable_calibration", "0");
     }
 
     public static boolean isSupported() {

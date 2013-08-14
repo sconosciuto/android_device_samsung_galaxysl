@@ -32,7 +32,7 @@ public class VibratorIntensity extends ListPreference implements OnPreferenceCha
         this.setOnPreferenceChangeListener(this);
     }
 
-    private static final String FILE = "/sys/vibetonz/pwmvalue_intensity";
+    private static final String FILE = "/sys/vibrator/pwmvalue";
 
     public static boolean isSupported() {
         return Utils.fileExists(FILE);

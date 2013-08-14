@@ -73,13 +73,6 @@ public class ScreenFragmentActivity extends PreferenceFragment {
                     Integer.toString(sharedPrefs.getInt(DeviceSettings.KEY_TOUCHKEYS_TIMEOUT, 1600)));
             }
         }
-        if (key.compareTo(DeviceSettings.KEY_TOUCHSCREEN_DISABLE_CALIBRATION) == 0) {
-            if(((CheckBoxPreference)preference).isChecked()) {
-                Utils.writeValue("/sys/touchscreen/disable_calibration", "1");
-            } else {
-                Utils.writeValue("/sys/touchscreen/disable_calibration", "0");
-            }
-        }
         return true;
     }
 
