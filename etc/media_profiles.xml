@@ -88,7 +88,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="96000"
-                   sampleRate="8000"
+                   sampleRate="48000"
                    channels="2" />
         </EncoderProfile>
 
@@ -100,7 +100,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="96000"
-                   sampleRate="16000"
+                   sampleRate="48000"
                    channels="2" />
         </EncoderProfile>
 
@@ -112,7 +112,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="96000"
-                   sampleRate="16000"
+                   sampleRate="48000"
                    channels="2" />
         </EncoderProfile>
 
@@ -124,7 +124,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="96000"
-                   sampleRate="16000"
+                   sampleRate="48000"
                    channels="2" />
         </EncoderProfile>      
 
@@ -136,7 +136,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="12200"
-                   sampleRate="8000"
+                   sampleRate="48000"
                    channels="1" />
         </EncoderProfile>
 
@@ -148,7 +148,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="12200"
-                   sampleRate="8000"
+                   sampleRate="48000"
                    channels="1" />
         </EncoderProfile>
 
@@ -160,7 +160,7 @@
                    frameRate="30" />
             <Audio codec="aac"
                    bitRate="12200"
-                   sampleRate="8000"
+                   sampleRate="48000"
                    channels="1" />
         </EncoderProfile>
 
@@ -173,7 +173,7 @@
             <!-- audio setting is ignored -->
             <Audio codec="aac"
                    bitRate="96000"
-                   sampleRate="16000"
+                   sampleRate="48000"
                    channels="1" />
         </EncoderProfile>
 
