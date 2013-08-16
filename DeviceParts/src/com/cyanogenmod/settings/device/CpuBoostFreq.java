@@ -41,7 +41,7 @@ public class CpuBoostFreq extends ListPreference implements OnPreferenceChangeLi
         }
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        Utils.writeValue(FILE, sharedPrefs.getString(DeviceSettings.KEY_CPU_BOOST_FREQ, "800000"));
+        Utils.writeValue(FILE, sharedPrefs.getString(DeviceSettings.KEY_CPU_BOOST_FREQ, "600000"));
     }
 
     public static boolean isSupported() {

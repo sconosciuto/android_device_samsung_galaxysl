@@ -10,7 +10,7 @@
                 android:summary="@string/cpu_boost_freq_summary_head"
                 android:entries="@array/cpu_boost_freq_entries"
                 android:entryValues="@array/cpu_boost_freq_entries_values"
-                android:defaultValue="800000" />
+                android:defaultValue="600000" />
     </PreferenceCategory>
 
 </PreferenceScreen>
