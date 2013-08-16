@@ -149,7 +149,7 @@ static void latona_power_hint(struct power_module *module, power_hint_t hint,
                 duration = (int) data;
 
             snprintf(buf, sizeof(buf), "%d", duration);
-            len = write(latona->boostpulse_fd, "1", 1);
+            len = write(latona->boostpulse_fd, buf, strlen(buf));
 
             if (len < 0) {
                 strerror_r(errno, buf, sizeof(buf));
