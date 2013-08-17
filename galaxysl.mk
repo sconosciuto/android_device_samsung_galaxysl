@@ -137,7 +137,6 @@ PRODUCT_PACKAGES += \
 
 # Audio
 PRODUCT_PACKAGES += \
-	hcitool hciattach hcidump \
 	libaudioutils audio.a2dp.default \
 	audio.primary.omap3 audio.usb.default
 
