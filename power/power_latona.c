@@ -94,6 +94,7 @@ static int64_t systemTime()
 static void latona_power_init(struct power_module *module)
 {
     sysfs_write(CPUFREQ_ONDEMAND "boostfreq", "600000");
+    sysfs_write(CPUFREQ_ONDEMAND "sampling_rate", "90000");
 }
 
 static int boostpulse_open(struct latona_power_module *latona)
