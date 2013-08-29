@@ -41,6 +41,7 @@
     <string name="vibrator_subcat_title">Vibrazione</string>
     <string name="vibrator_intensity_title_head">Intensità vibrazione</string>
     <string name="vibrator_intensity_summary_head">Imposta l\'intensità della vibrazione</string>
+    <string name="vibrator_intensity_seekbar_title">Intensità vibrazione</string>
 
     <!-- HSPA -->
     <string name="hspa_subcat_title">Radio</string>

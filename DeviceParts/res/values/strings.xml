@@ -43,6 +43,7 @@
     <string name="vibrator_subcat_title">Vibrator</string>
     <string name="vibrator_intensity_title_head">Vibrator intensity</string>
     <string name="vibrator_intensity_summary_head">Set vibrator intensity</string>
+    <string name="vibrator_intensity_seekbar_title">Set vibrator intensity</string>
 
     <!-- HSPA -->
     <string name="hspa_subcat_title">Radio</string>
