@@ -187,6 +187,9 @@ on post-fs-data
 # svnet waketime
     chown radio system /sys/devices/virtual/net/svnet0/waketime
 
+# touchkeys backlight timeout
+    chown root system /sys/class/leds/button-backlight/bl_timeout
+
 on boot
 
     # Mount debugfs

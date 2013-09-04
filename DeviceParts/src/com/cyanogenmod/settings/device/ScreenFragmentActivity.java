@@ -65,11 +65,10 @@ public class ScreenFragmentActivity extends PreferenceFragment {
         if (key.compareTo(DeviceSettings.KEY_TOUCHKEYS_TIMEOUT_DISABLED) == 0) {
             if(((CheckBoxPreference)preference).isChecked()) {
                 mTouchkeysTimeout.setEnabled(false);
-                Utils.writeValue("/sys/class/misc/notification/bl_timeout", "0");
-                Utils.writeValue("/sys/class/leds/button-backlight/brightness", "0"); //Turn LEDs off
+                Utils.writeValue("/sys/class/leds/button-backlight/bl_timeout", "0");
             } else {
                 mTouchkeysTimeout.setEnabled(true);
-                Utils.writeValue("/sys/class/misc/notification/bl_timeout",
+                Utils.writeValue("/sys/class/leds/button-backlight/bl_timeout",
                     Integer.toString(sharedPrefs.getInt(DeviceSettings.KEY_TOUCHKEYS_TIMEOUT, 1600)));
             }
         }

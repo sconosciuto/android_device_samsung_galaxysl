@@ -14,7 +14,7 @@ import android.widget.TextView;
 
 public class TouchkeysTimeout extends DialogPreference implements OnClickListener {
 
-    private static final String FILE = "/sys/class/misc/notification/bl_timeout";
+    private static final String FILE = "/sys/class/leds/button-backlight/bl_timeout";
 
     private static final int DEFAULT_VALUE = 1600;
     private static final int MAX_VALUE = 10000;
