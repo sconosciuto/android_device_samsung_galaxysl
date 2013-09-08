@@ -59,9 +59,9 @@ __BEGIN_DECLS
 #define EVENT_TYPE_PITCH            REL_Y
 #define EVENT_TYPE_ROLL             REL_Z
 
-#define EVENT_TYPE_MAGV_X           ABS_X
-#define EVENT_TYPE_MAGV_Y           ABS_Y
-#define EVENT_TYPE_MAGV_Z           ABS_Z
+#define EVENT_TYPE_MAGV_X           REL_X
+#define EVENT_TYPE_MAGV_Y           REL_Y
+#define EVENT_TYPE_MAGV_Z           REL_Z
 
 #define EVENT_TYPE_PROXIMITY        ABS_DISTANCE
 #define EVENT_TYPE_LIGHT            ABS_MISC
