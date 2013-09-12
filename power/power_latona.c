@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <time.h>
 
 #define LOG_TAG "Latona PowerHAL"
 #include <utils/Log.h>
@@ -41,7 +40,6 @@ struct latona_power_module {
     pthread_mutex_t lock;
     int boostpulse_fd;
     int boostpulse_warned;
-    int64_t last_maxfreq_change;
 };
 
 static void sysfs_write(char *path, char *s)
@@ -83,14 +81,6 @@ int sysfs_read(const char *path, char *buf, size_t size)
     return len;
 }
 
-static int64_t systemTime()
-{
-    struct timespec t;
-    t.tv_sec = t.tv_nsec = 0;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec*1000000000LL + t.tv_nsec;
-}
-
 static void latona_power_init(struct power_module *module)
 {
     sysfs_write(CPUFREQ_ONDEMAND "boostfreq", "600000");
@@ -120,31 +110,6 @@ static int boostpulse_open(struct latona_power_module *latona)
 
 static void latona_power_set_interactive(struct power_module *module, int on)
 {
-    struct latona_power_module *latona = (struct latona_power_module *) module;
-    int len;
-    char buf[MAX_BUF_SZ];
-
-    /*
-     * Lower maximum frequency when screen is off.  
-     */
-    if (!on) {
-        /* read the current scaling max freq and save it before updating, but
-         * only if the at least 500ms have passed since the last change.
-         * This should prevent unwanted changes in case the "on" call is skipped
-         * (can happen if you press the power button repeatedly)
-         */
-        if ((systemTime() - latona->last_maxfreq_change) > 500000000) {
-            len = sysfs_read(CPUFREQ_CPU0 "scaling_max_freq", buf, sizeof(buf));
-            if (len != -1)
-                memcpy(scaling_max_freq, buf, sizeof(buf));
-        } else
-            ALOGI("Don't save current max frequency");
-
-        sysfs_write(CPUFREQ_CPU0 "scaling_max_freq", screen_off_max_freq);
-    } else
-        sysfs_write(CPUFREQ_CPU0 "scaling_max_freq", scaling_max_freq);
-
-    latona->last_maxfreq_change = systemTime();
 }
 
 static void latona_power_hint(struct power_module *module, power_hint_t hint,
@@ -209,5 +174,4 @@ struct latona_power_module HAL_MODULE_INFO_SYM = {
     lock: PTHREAD_MUTEX_INITIALIZER,
     boostpulse_fd: -1,
     boostpulse_warned: 0,
-    last_maxfreq_change: 0,
 };
