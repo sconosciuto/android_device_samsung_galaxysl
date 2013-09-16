@@ -13,3 +13,6 @@ ro.cwm.repeatable_keys=115,114,158
 
 # Disable zram
 ro.zram.default=0
+
+# Hide GC freed lines in logcat
+dalvik.vm.debug.alloc=0
