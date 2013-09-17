@@ -157,8 +157,8 @@ on post-fs-data
     chown system input /sys/class/input/input5/position
     chown system input /sys/class/input/input5/threshold
     chown system input /sys/class/input/input5/wake
-    chown system input /sys/class/sensors/accelerometer_sensor/raw_data
-    chown system input /sys/class/sensors/accelerometer_sensor/calibration
+    chown system input /sys/class/input/input5/raw_data
+    chown system input /sys/class/input/input5/calibration
 
 # orientation
     chown system input /sys/class/input/input6/enable

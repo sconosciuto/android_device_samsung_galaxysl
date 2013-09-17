@@ -50,7 +50,7 @@ public class GeneralFragmentActivity extends PreferenceFragment {
         String key = preference.getKey();
 
         if (key.compareTo(DeviceSettings.KEY_ACCELEROMETER_CALIBRATION) == 0) {
-        	Utils.writeValue("/sys/devices/virtual/sensors/accelerometer_sensor/calibration", "1");
+        	Utils.writeValue("/sys/class/input/input5/calibration", "1");
         	AlertDialog.Builder builder = new AlertDialog.Builder((Context)getActivity());
             builder.setTitle((R.string.accelerometer_dialog_head))
             .setMessage((R.string.accelerometer_dialog_message))
