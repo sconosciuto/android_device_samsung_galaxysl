@@ -201,6 +201,10 @@ DEVICE_PACKAGE_OVERLAYS += device/samsung/galaxysl/overlay
 PRODUCT_PROPERTY_OVERRIDES := \
     ro.opengles.version=131072
 
+# PowerVR graphics driver configuration
+PRODUCT_COPY_FILES += \
+   $(LOCAL_PATH)/etc/powervr.ini:system/etc/powervr.ini
+
 # These are the hardware-specific settings that are stored in system properties.
 # Note that the only such settings should be the ones that are too low-level to
 # be reachable from resources or other mechanisms.
