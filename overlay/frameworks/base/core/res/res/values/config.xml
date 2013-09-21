@@ -27,8 +27,6 @@
     <!-- There is no charging LED. -->
     <bool name="config_unplugTurnsOnScreen">true</bool>
 
-    <bool name="config_animateScreenLights">false</bool>
-
     <!-- disable menu hard key in non-pattern lockscreen -->
     <bool name="config_disableMenuKeyInLockScreen">true</bool>
 
