@@ -32,9 +32,6 @@ on fs
     mount yaffs2 mtd@efs /efs
     mount yaffs2 mtd@radio /radio
 
-    mount ext4 /dev/block/mmcblk0p3 /data
-    mount ext4 /dev/block/mmcblk0p2 /cache
-
     mount_all fstab.latona
 
     # download cache
