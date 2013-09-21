@@ -303,7 +303,7 @@ on boot
     write /sys/kernel/debug/smartreflex/sr_core/autocomp 1
 
     # Setting scaling governor
-    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ondemand
 
 # for datarouter
     chown system system /dev/ttyGS0
