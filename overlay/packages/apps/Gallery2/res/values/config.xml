@@ -24,4 +24,3 @@
          exists. Use this option to change that behavior -->
     <bool name="wantsFocusModes">true</bool>
 </resources>
-
