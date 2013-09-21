@@ -27,7 +27,6 @@
 #include <cutils/native_handle.h>
 #include <hal_public.h>
 #include <ui/GraphicBufferMapper.h>
-#include <gui/IGraphicBufferProducer.h>
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #define VIDEO_DEVICE_2      "/dev/video5"
@@ -42,8 +41,6 @@
 
 #define PIX_YUV422I 0
 #define HAL_PIXEL_FORMAT_YUV     0x1B
-
-//static const int INITIAL_SKIP_FRAME = 3;
 
 #define CAMHAL_GRALLOC_USAGE GRALLOC_USAGE_HW_TEXTURE | \
                              GRALLOC_USAGE_HW_RENDER | \
@@ -65,6 +62,9 @@
 #define FRONT_CAMERA_FOCUS_DISTANCES_STR "0.20,0.25,Infinity"
 const char FOCUS_MODE_FACEDETECTION[] = "facedetect";
 
+#define MIN_INTERVAL 35000000
+#define MAX_INTERVAL 60000000
+
 #include <cutils/properties.h>
 #ifndef UNLIKELY
 #define UNLIKELY(exp) (__builtin_expect( (exp) != 0, false ))
@@ -73,37 +73,28 @@ static int mDebugFps = 0;
 static int mCameraID = 0;
 int version = 0;
 
-static int processedFrames = 0;
-static int framesToSkipHD;
-static int framesToSkip;
-static int framesToDrop;
-
 namespace android {
 
 static int buffersQueued = 0;
 
+static nsecs_t mLastShownTime = 0;
+
 /* 29/12/10 : preview/picture size validation logic */
 const char CameraHardware::supportedPictureSizes_ffc [] = "640x480";
 const char CameraHardware::supportedPictureSizes_bfc [] = "2560x1920,2560x1536,2048x1536,2048x1232,1600x1200,1600x960,800x480,640x480";
-const char CameraHardware::supportedPreviewSizes_ffc [] = "640x480,176x144";
+const char CameraHardware::supportedPreviewSizes_ffc [] = "640x480";
 const char CameraHardware::supportedPreviewSizes_bfc [] = "1280x720,800x480,720x480,640x480,352x288";
 gralloc_module_t const* CameraHardware::mGrallocHal;
 
 CameraHardware::CameraHardware(int CameraID)
                   : mParameters(),
-                    mHeap(0),
-                    mPreviewHeap(0),
-                    mRawHeap(0),
                     mCamera(0),
-                    mPreviewFrameSize(0),
                     mNotifyCb(0),
                     mDataCb(0),
                     mDataCbTimestamp(0),
                     mCallbackCookie(0),
                     mMsgEnabled(0),
-                    previewStopped(true),
                     mRecordingEnabled(false),
-                    mSkipFrame(0),
                     isStart_scaler(false)
 {
     /* create camera */
@@ -111,6 +102,10 @@ CameraHardware::CameraHardware(int CameraID)
     version = get_kernel_version();
     mCameraID = CameraID;
     int ret = 0;
+
+    mPreviewHeap = NULL;
+    mScaleHeap = NULL;
+    mFrameScaled = NULL;
 
     if (CameraID == CAMERA_FF) {
         mCamera->Open(VIDEO_DEVICE_2);
@@ -128,10 +123,6 @@ CameraHardware::CameraHardware(int CameraID)
         mRecordHeap[i] = NULL;
         //mRecordBufferState[i] = 0;
     }
-
-    mScaleHeap = NULL;
-    mFrameScale = NULL;
-    mPreviewFrame = NULL;
 
     if (!mGrallocHal) {
         ret = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t**)&mGrallocHal);
@@ -179,22 +170,6 @@ CameraHardware::CameraHardware(int CameraID)
     property_get("debug.camera.showfps", value, "0");
     mDebugFps = atoi(value);
     ALOGD_IF(mDebugFps, "showfps enabled");
-
-    property_get("camera.720.fps", value, "8");
-    framesToSkipHD = atoi(value);
-    ALOGI("720p frames to skip: %d", framesToSkipHD);
-
-    property_get("camera.480.fps", value, "1");
-    framesToSkip = atoi(value);
-    ALOGI("480p frames to skip: %d", framesToSkip);
-
-    property_get("camera.record.drop", value, "15");
-    framesToDrop = atoi(value);
-    ALOGI("Initial frames to drop: %d", framesToDrop);
-
-    // Disable ISP resizer (use DSS resizer)
-    system("echo 0 > "
-            "/sys/devices/platform/dsscomp/isprsz/enable");
 }
 
 void CameraHardware::SetDSPKHz(unsigned int KHz)
@@ -259,6 +234,8 @@ void CameraHardware::initDefaultParameters(int CameraID)
         parameterString.append(",");
         parameterString.append(CameraParameters::FOCUS_MODE_MACRO);
         parameterString.append(",");
+        parameterString.append(CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
+        parameterString.append(",");
         parameterString.append(FOCUS_MODE_FACEDETECTION);
         p.set(CameraParameters::KEY_SUPPORTED_FOCUS_MODES,
               parameterString.string());
@@ -290,6 +267,7 @@ void CameraHardware::initDefaultParameters(int CameraID)
         p.set(CameraParameters::KEY_ZOOM_RATIOS, "100,125,150,175,200,225,250,275,300,325,350,375,400");
         p.set(CameraParameters::KEY_ZOOM_SUPPORTED, "true");
 
+        // scene
         parameterString = CameraParameters::SCENE_MODE_AUTO;
         parameterString.append(",");
         parameterString.append(CameraParameters::SCENE_MODE_PORTRAIT);
@@ -311,30 +289,43 @@ void CameraHardware::initDefaultParameters(int CameraID)
         parameterString.append(CameraParameters::SCENE_MODE_PARTY);
         parameterString.append(",");
         parameterString.append(CameraParameters::SCENE_MODE_CANDLELIGHT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::SCENE_MODE_ASD);
+        parameterString.append(",");
+        parameterString.append("backlight,dusk-dawn,text,fall-color");
         p.set(CameraParameters::KEY_SUPPORTED_SCENE_MODES,
               parameterString.string());
-    }
-    p.set(CameraParameters::KEY_SCENE_MODE, CameraParameters::SCENE_MODE_AUTO);
-    parameterString = CameraParameters::EFFECT_NONE;
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_MONO);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_NEGATIVE);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::EFFECT_SEPIA);
-    p.set(CameraParameters::KEY_SUPPORTED_EFFECTS, parameterString.string());
 
-    parameterString = CameraParameters::WHITE_BALANCE_AUTO;
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_INCANDESCENT);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_FLUORESCENT);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_DAYLIGHT);
-    parameterString.append(",");
-    parameterString.append(CameraParameters::WHITE_BALANCE_CLOUDY_DAYLIGHT);
-    p.set(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE,
-          parameterString.string());
+        // effect
+        parameterString = CameraParameters::EFFECT_NONE;
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_MONO);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_NEGATIVE);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_SEPIA);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::EFFECT_AQUA);
+        parameterString.append(",");
+        parameterString.append("sharpen,purple,green-tint,blue-tint,pink,"
+                               "yellow,red-tint,mono,antique");
+        p.set(CameraParameters::KEY_SUPPORTED_EFFECTS, parameterString.string());
+
+        // whitebalance
+        parameterString = CameraParameters::WHITE_BALANCE_AUTO;
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_INCANDESCENT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_FLUORESCENT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_DAYLIGHT);
+        parameterString.append(",");
+        parameterString.append(CameraParameters::WHITE_BALANCE_CLOUDY_DAYLIGHT);
+        p.set(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE,
+              parameterString.string());
+    }
+
+    p.set(CameraParameters::KEY_SCENE_MODE, CameraParameters::SCENE_MODE_AUTO);
 
     p.set(CameraParameters::KEY_EXPOSURE_COMPENSATION, "0");
     p.set(CameraParameters::KEY_MAX_EXPOSURE_COMPENSATION, "4");
@@ -351,6 +342,9 @@ void CameraHardware::initDefaultParameters(int CameraID)
     p.set(p.KEY_GPS_ALTITUDE, "0");
     p.set(p.KEY_GPS_TIMESTAMP, "0");
     p.set(p.KEY_GPS_PROCESSING_METHOD, "GPS");
+
+    p.set("iso-values", "auto,ISO50,ISO100,ISO200,ISO400,ISO800,ISO1600");
+    p.set("iso", "auto");
 
     //Extra Parameters - GalaxySL
     mCamera->setISO(ISO_AUTO);
@@ -405,8 +399,8 @@ ret:
 
 CameraHardware::~CameraHardware()
 {
-    mCamera->Uninit(0);
-    mCamera->StopStreaming(0);
+    mCamera->Uninit(STATE_PREVIEW);
+    mCamera->StopStreaming(STATE_PREVIEW);
     mCamera->Close();
     if (neon_args) {
         free((NEON_FUNCTION_ARGS*)neon_args);
@@ -418,22 +412,6 @@ CameraHardware::~CameraHardware()
     }
     delete mCamera;
     mCamera = 0;
-
-    // Re-enable ISP resizer for 720P playback
-    system("echo 1 > "
-            "/sys/devices/platform/dsscomp/isprsz/enable");
-}
-
-sp<IMemoryHeap> CameraHardware::getPreviewHeap() const
-{
-    ALOGV("Preview Heap");
-    return mPreviewHeap;
-}
-
-sp<IMemoryHeap> CameraHardware::getRawHeap() const
-{
-    ALOGV("Raw Heap");
-    return mRawHeap;
 }
 
 void CameraHardware::setCallbacks(camera_notify_callback notify_cb,
@@ -451,35 +429,60 @@ void CameraHardware::setCallbacks(camera_notify_callback notify_cb,
     return;
 }
 
-int CameraHardware::setPreviewWindow( preview_stream_ops_t *window)
+status_t CameraHardware::setPreviewWindow(preview_stream_ops *w)
 {
-    int err;
+    int min_bufs;
 
-    Mutex::Autolock lock(mLock);
-    if (mNativeWindow)
-        mNativeWindow = NULL;
-    if (window == NULL) {
-        ALOGW("Window is Null");
-        return 0;
+    mNativeWindow = w;
+    ALOGV("%s: mNativeWindow %p", __func__, mNativeWindow);
+
+    if (!w) {
+        ALOGE("preview window is NULL!");
+        return OK;
     }
 
-    int width, height;
-    mParameters.getPreviewSize(&width, &height);
-    mNativeWindow = window;
-    mNativeWindow->set_usage(mNativeWindow, CAMHAL_GRALLOC_USAGE);
-    mNativeWindow->set_buffers_geometry(
-        mNativeWindow,
-        width,
-        height,
-        HAL_PIXEL_FORMAT_YUV);
-    err = mNativeWindow->set_buffer_count(mNativeWindow, NB_BUFFER);
-    if (err != 0) {
-        ALOGE("native_window_set_buffer_count failed: %s (%d)", strerror(-err), -err);
+    mPreviewLock.lock();
 
-        if (ENODEV == err) {
-            ALOGE("Preview surface abandoned!");
-            mNativeWindow = NULL;
-        }
+    if (mPreviewRunning && !mPreviewStartDeferred) {
+        ALOGI("stop preview (window change)");
+        stopPreviewInternal();
+    }
+
+    if (w->get_min_undequeued_buffer_count(w, &min_bufs)) {
+        ALOGE("%s: could not retrieve min undequeued buffer count", __func__);
+        return INVALID_OPERATION;
+    }
+
+    if (min_bufs >= NB_BUFFER) {
+        ALOGE("%s: min undequeued buffer count %d is too high (expecting at most %d)", __func__,
+             min_bufs, NB_BUFFER - 1);
+    }
+
+    ALOGV("%s: setting buffer count to %d", __func__, NB_BUFFER);
+    if (w->set_buffer_count(w, NB_BUFFER)) {
+        ALOGE("%s: could not set buffer count", __func__);
+        return INVALID_OPERATION;
+    }
+
+    int preview_width;
+    int preview_height;
+    mParameters.getPreviewSize(&preview_width, &preview_height);
+    int hal_pixel_format = HAL_PIXEL_FORMAT_YUV;
+
+    const char *str_preview_format = mParameters.getPreviewFormat();
+    ALOGV("%s: preview format %s", __func__, str_preview_format);
+
+    if (w->set_usage(w, CAMHAL_GRALLOC_USAGE)) {
+        ALOGE("%s: could not set usage on gralloc buffer", __func__);
+        return INVALID_OPERATION;
+    }
+
+    if (w->set_buffers_geometry(w,
+                                preview_width, preview_height,
+                                hal_pixel_format)) {
+        ALOGE("%s: could not set buffers geometry to %s",
+             __func__, str_preview_format);
+        return INVALID_OPERATION;
     }
 
     if (mPreviewRunning && mPreviewStartDeferred) {
@@ -490,8 +493,9 @@ int CameraHardware::setPreviewWindow( preview_stream_ops_t *window)
             mPreviewCondition.signal();
         }
     }
+    mPreviewLock.unlock();
 
-    return 0;
+    return OK;
 }
 
 void CameraHardware::enableMsgType(int32_t msgType)
@@ -582,12 +586,18 @@ int CameraHardware::previewThread()
     int index;
     nsecs_t timestamp;
     void *tempbuf;
-    int width, height, framesize_yuv;
-    int previewFramesToSkip;
+    int width, height;
+    int framesize, preview_framesize;
+    int offset;
+    int maxInterval = MAX_INTERVAL;
 
     mParameters.getPreviewSize(&width, &height);
 
-    framesize_yuv = width * height * 2;
+    if (height > 500 && mRecordingEnabled)
+        maxInterval = MAX_INTERVAL * 3 / 2;
+
+    framesize = width * height * 2;
+    preview_framesize = width * height * 3 / 2;
 
     if (UNLIKELY(mDebugFps)) {
         showFPS("Preview");
@@ -595,39 +605,20 @@ int CameraHardware::previewThread()
 
     tempbuf = mCamera->GrabPreviewFrame(index);
 
+    offset = preview_framesize * index;
+
     if (mRecordingEnabled && buffersQueued > 6) {
         ALOGE("Buffers queued: %d", buffersQueued);
         return NO_ERROR;
     }
 
-    mSkipFrameLock.lock();
-    if (mSkipFrame > 0) {
-        mSkipFrame--;
-        mSkipFrameLock.unlock();
-        ALOGV("%s: index %d skipping frame", __func__, index);
-        return NO_ERROR;
-    }
-    mSkipFrameLock.unlock();
-
     timestamp = systemTime(SYSTEM_TIME_MONOTONIC);
 
-    if (mRecordingEnabled && height > 500) {
-        previewFramesToSkip = framesToSkipHD;
+    if ((timestamp - mLastShownTime) > MIN_INTERVAL && (timestamp - mLastShownTime) < maxInterval) {
+        ALOGV("Skipping preview frame: %lldns\n", (timestamp - mLastShownTime));
+        goto callbacks;
     }
-    else {
-        // 720p: half preview framerate
-        previewFramesToSkip = 1;
-    }
-
-    if (mRecordingEnabled || height > 500) {
-        // lower preview framerate
-        if (processedFrames < previewFramesToSkip) {
-            processedFrames++;
-            goto callbacks;
-        } else {
-            processedFrames = 0;
-        }
-    }
+    mLastShownTime = timestamp;
 
     if (mNativeWindow && mGrallocHal) {
         buffer_handle_t *buf_handle;
@@ -647,7 +638,7 @@ int CameraHardware::previewThread()
                     ALOGE("scale_process() failed\n");
                 }
                 neon_args->pIn = (uint8_t*)mScaleHeap->data;
-                neon_args->pOut = (uint8_t*)mFrameScale->data;
+                neon_args->pOut = (uint8_t*)mFrameScaled->data;
                 neon_args->width = PREVIEW_HEIGHT;
                 neon_args->height = PREVIEW_WIDTH;
                 neon_args->rotate = NEON_ROT90;
@@ -661,9 +652,9 @@ int CameraHardware::previewThread()
                     ALOGE("Error in Rotation 90");
 
                 }
-		memcpy((unsigned char *)vaddr, (unsigned char *)mFrameScale->data,framesize_yuv);
+                memcpy((unsigned char *)vaddr, (unsigned char *)mFrameScaled->data, framesize);
             } else
-                memcpy((unsigned char *)vaddr, (unsigned char *)tempbuf,framesize_yuv);
+                memcpy((unsigned char *)vaddr, (unsigned char *)tempbuf, framesize);
 
             mGrallocHal->unlock(mGrallocHal, *buf_handle);
         } else
@@ -681,19 +672,19 @@ callbacks:
         const char * preview_format = mParameters.getPreviewFormat();
         if (!strcmp(preview_format, CameraParameters::PIXEL_FORMAT_YUV420SP)) {
             if (mCameraID == CAMERA_FF)
-                Neon_Convert_yuv422_to_NV21((unsigned char*)mFrameScale->data, (unsigned char*)mPreviewFrame->data, width, height);
+                Neon_Convert_yuv422_to_NV21((unsigned char*)mFrameScaled->data, (unsigned char*)mPreviewHeap->data + offset, width, height);
             else
-                Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewFrame->data, width, height);
+                Neon_Convert_yuv422_to_NV21((unsigned char*)tempbuf, (unsigned char*)mPreviewHeap->data + offset, width, height);
         }
-        mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewFrame, index, NULL, mCallbackCookie);
+        mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewHeap, index, NULL, mCallbackCookie);
     }
 
     Mutex::Autolock lock(mRecordingLock);
     if (mRecordingEnabled == true) {
         if (mCameraID == CAMERA_FF)
-            memcpy(mRecordHeap[index]->data, mFrameScale->data, framesize_yuv);
+            memcpy(mRecordHeap[index]->data, mFrameScaled->data, framesize);
         else
-            memcpy(mRecordHeap[index]->data, tempbuf, framesize_yuv);
+            memcpy(mRecordHeap[index]->data, tempbuf, framesize);
         buffersQueued++;
         //mRecordBufferState[index] = 1;
 
@@ -709,9 +700,6 @@ callbacks:
 status_t CameraHardware::startPreview()
 {
     int ret = 0;
-    int width, height;
-    int mRecordingFrameSize;
-    int mFrameSize;
 
     mPreviewLock.lock();
     if (mPreviewRunning) {
@@ -731,38 +719,9 @@ status_t CameraHardware::startPreview()
         return NO_ERROR;
     }
 
-    mParameters.getPreviewSize(&width, &height);
-    mRecordingFrameSize = width * height * 2;
-    mFrameSize = width * height * 1.5;
-
-    for (int i = 0; i < NB_BUFFER; i++) {
-        if (mRecordHeap[i] != NULL) {
-            mRecordHeap[i]->release(mRecordHeap[i]);
-            mRecordHeap[i] = 0;
-        }
-        //mRecordBufferState[i] = 0;
-        mRecordHeap[i] = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
-    }
-
-    if (mCameraID == CAMERA_FF) {
-        if (mScaleHeap != NULL)
-            mScaleHeap->release(mScaleHeap);
-        mScaleHeap = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
-
-        if (mFrameScale != NULL)
-            mFrameScale->release(mFrameScale);
-        mFrameScale = mRequestMemory(-1, mRecordingFrameSize, 1, NULL);
-    }
-
-    if (mPreviewFrame != NULL)
-        mPreviewFrame->release(mPreviewFrame);
-    mPreviewFrame = mRequestMemory(-1, mFrameSize, 1, NULL);
-
     ret = startPreviewInternal();
     if (ret == OK)
         mPreviewCondition.signal();
-
-    processedFrames = 0;
 
     mPreviewLock.unlock();
     return ret;
@@ -770,9 +729,10 @@ status_t CameraHardware::startPreview()
 
 status_t CameraHardware::startPreviewInternal()
 {
-    int mHeapSize = 0;
     int ret = 0;
     int fps = mParameters.getPreviewFrameRate();
+    int framesize;
+    int preview_framesize;
 
     mParameters.getPreviewSize(&mPreviewWidth, &mPreviewHeight);
     ALOGD("startPreview width:%d,height:%d", mPreviewWidth, mPreviewHeight);
@@ -781,43 +741,47 @@ status_t CameraHardware::startPreviewInternal()
         return INVALID_OPERATION;
     }
 
-    if (mCameraID == CAMERA_FF)
+    framesize = mPreviewWidth * mPreviewHeight * 2;
+    preview_framesize = mPreviewWidth * mPreviewHeight * 3 / 2;
+
+    if (mPreviewHeap) {
+        mPreviewHeap->release(mPreviewHeap);
+        mPreviewHeap = NULL;
+    }
+    mPreviewHeap = mRequestMemory(-1, preview_framesize, NB_BUFFER, NULL);
+
+    for (int i = 0; i < NB_BUFFER; i++) {
+        if (mRecordHeap[i] != NULL) {
+            mRecordHeap[i]->release(mRecordHeap[i]);
+            mRecordHeap[i] = 0;
+        }
+        //mRecordBufferState[i] = 0;
+        mRecordHeap[i] = mRequestMemory(-1, framesize, 1, NULL);
+    }
+
+    if (mCameraID == CAMERA_FF) {
         fps = 15;
-    ret = mCamera->Configure(mPreviewWidth, mPreviewHeight, PIXEL_FORMAT, fps, 0);
+
+        if (mScaleHeap) {
+            mScaleHeap->release(mScaleHeap);
+            mScaleHeap = NULL;
+        }
+        mScaleHeap = mRequestMemory(-1, framesize, 1, NULL);
+
+        if (mFrameScaled) {
+            mFrameScaled->release(mFrameScaled);
+            mFrameScaled = NULL;
+        }
+        mFrameScaled = mRequestMemory(-1, framesize, 1, NULL);
+    }
+
+    ret = mCamera->Configure(mPreviewWidth, mPreviewHeight, PIXEL_FORMAT, fps, STATE_PREVIEW);
     if (ret < 0) {
         ALOGE("Fail to configure camera device");
         return INVALID_OPERATION;
     }
-    /* clear previously buffers*/
-    if (mPreviewHeap != NULL) {
-        ALOGD("mPreviewHeap Cleaning!!!!");
-        mPreviewHeap.clear();
-    }
 
-    if (mRawHeap != NULL) {
-        ALOGD("mRawHeap Cleaning!!!!");
-        mRawHeap.clear();
-    }
-
-    if (mHeap != NULL) {
-        ALOGD("mHeap Cleaning!!!!");
-        mHeap.clear();
-    }
-
-    mPreviewFrameSize = mPreviewWidth * mPreviewHeight * 2;
-    mHeapSize = (mPreviewWidth * mPreviewHeight * 3) >> 1;
-
-    /* mHead is yuv420 buffer, as default encoding is yuv420 */
-    mHeap = new MemoryHeapBase(mHeapSize);
-    mBuffer = new MemoryBase(mHeap, 0, mHeapSize);
-
-    mPreviewHeap = new MemoryHeapBase(mPreviewFrameSize);
-    mPreviewBuffer = new MemoryBase(mPreviewHeap, 0, mPreviewFrameSize);
-
-    mRawHeap = new MemoryHeapBase(mPreviewFrameSize);
-    mRawBuffer = new MemoryBase(mRawHeap, 0, mPreviewFrameSize);
-
-    ret = mCamera->BufferMap(0);
+    ret = mCamera->BufferMap(STATE_PREVIEW);
     if (ret) {
         ALOGE("Camera Init fail: %s", strerror(errno));
         return UNKNOWN_ERROR;
@@ -826,12 +790,10 @@ status_t CameraHardware::startPreviewInternal()
     ret = mCamera->StartStreaming(0);
     if (ret) {
         ALOGE("Camera StartStreaming fail: %s", strerror(errno));
-        mCamera->Uninit(0);
+        mCamera->Uninit(STATE_PREVIEW);
         mCamera->Close();
         return UNKNOWN_ERROR;
     }
-
-    //setSkipFrame(INITIAL_SKIP_FRAME);
 
     return NO_ERROR;
 }
@@ -876,10 +838,8 @@ status_t CameraHardware::startRecording()
     // Boost DSP OPP to highest level
     SetDSPKHz(DSP3630_KHZ_MAX);
 
-    //Skip the first recording frames since it is often garbled
-    setSkipFrame(framesToDrop);
+    mCamera->setCamMode(MODE_CAMCORDER);
 
-    processedFrames = 0;
     buffersQueued = 0;
 
     mRecordingEnabled = true;
@@ -900,6 +860,8 @@ void CameraHardware::stopRecording()
         }*/
         mRecordingEnabled = false;
     }
+
+    mCamera->setCamMode(MODE_CAMERA);
 
     // Release constraint to DSP OPP by setting lowest Hz
     SetDSPKHz(DSP3630_KHZ_MIN);
@@ -1044,12 +1006,12 @@ int CameraHardware::pictureThread()
         fps = 15;
         pixelformat = PIXEL_FORMAT;
     }
-    ret = mCamera->Configure(width, height, pixelformat, fps, 1);
+    ret = mCamera->Configure(width, height, pixelformat, fps, STATE_PICTURE);
     if (ret < 0) {
         ALOGE("Fail to configure camera device");
         return INVALID_OPERATION;
     }
-    ret = mCamera->BufferMap(1);
+    ret = mCamera->BufferMap(STATE_PICTURE);
     if (ret) {
         ALOGE("Camera BufferMap fail: %s", strerror(errno));
         return UNKNOWN_ERROR;
@@ -1058,7 +1020,7 @@ int CameraHardware::pictureThread()
     ret = mCamera->StartStreaming(1);
     if (ret) {
         ALOGE("Camera StartStreaming fail: %s", strerror(errno));
-        mCamera->Uninit(1);
+        mCamera->Uninit(STATE_PICTURE);
         mCamera->Close();
         return UNKNOWN_ERROR;
     }
@@ -1138,8 +1100,8 @@ int CameraHardware::pictureThread()
     }
 
     /* Close operation */
-    mCamera->Uninit(1);
-    mCamera->StopStreaming(1);
+    mCamera->Uninit(STATE_PICTURE);
+    mCamera->StopStreaming(STATE_PICTURE);
 
     ALOGV("End pictureThread()");
     return NO_ERROR;
@@ -1299,7 +1261,7 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                         "15000,30000");
 
         if (!strcmp(new_scene_mode_str, (const char*)CameraParameters::SCENE_MODE_AUTO)) {
-            new_scene_mode = SCENE_MODE_NONE;
+            new_scene_mode = SCENE_MODE_OFF;
         } else {
             // defaults for non-auto scene modes
             if (mCameraID == CAMERA_BF) {
@@ -1313,34 +1275,43 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                                (const char*)CameraParameters::SCENE_MODE_LANDSCAPE)) {
                 new_scene_mode = SCENE_MODE_LANDSCAPE;
             } else if (!strcmp(new_scene_mode_str,
-                               (const char*)CameraParameters::SCENE_MODE_SPORTS)) {
-                new_scene_mode = SCENE_MODE_SPORTS;
+                               (const char*)CameraParameters::SCENE_MODE_NIGHT)) {
+                new_scene_mode = SCENE_MODE_NIGHTSHOT;
             } else if (!strcmp(new_scene_mode_str,
-                               (const char*)CameraParameters::SCENE_MODE_PARTY)) {
-                new_scene_mode = SCENE_MODE_PARTY_INDOOR;
-            } else if ((!strcmp(new_scene_mode_str,
-                                (const char*)CameraParameters::SCENE_MODE_BEACH)) ||
-                       (!strcmp(new_scene_mode_str,
-                                (const char*)CameraParameters::SCENE_MODE_SNOW))) {
+                               (const char*)CameraParameters::SCENE_MODE_BEACH)) {
+                new_scene_mode = SCENE_MODE_BEACH_SNOW;
+            } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_SNOW)) {
                 new_scene_mode = SCENE_MODE_BEACH_SNOW;
             } else if (!strcmp(new_scene_mode_str,
                                (const char*)CameraParameters::SCENE_MODE_SUNSET)) {
                 new_scene_mode = SCENE_MODE_SUNSET;
             } else if (!strcmp(new_scene_mode_str,
-                               (const char*)CameraParameters::SCENE_MODE_NIGHT)) {
-                new_scene_mode = SCENE_MODE_NIGHTSHOT;
-                mParameters.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE, "(4000,30000)");
-                mParameters.set(CameraParameters::KEY_PREVIEW_FPS_RANGE,
-                                "4000,30000");
-            } else if (!strcmp(new_scene_mode_str,
                                (const char*)CameraParameters::SCENE_MODE_FIREWORKS)) {
                 new_scene_mode = SCENE_MODE_FIREWORKS;
             } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_SPORTS)) {
+                new_scene_mode = SCENE_MODE_SPORTS;
+            } else if (!strcmp(new_scene_mode_str,
                                (const char*)CameraParameters::SCENE_MODE_CANDLELIGHT)) {
-                new_scene_mode = SCENE_MODE_CANDLE_LIGHT;
+                new_scene_mode = SCENE_MODE_CANDLELIGHT;
+            } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_ASD)) {
+                new_scene_mode = SCENE_MODE_ASD;
+            } else if (!strcmp(new_scene_mode_str,
+                               (const char*)CameraParameters::SCENE_MODE_PARTY)) {
+                new_scene_mode = SCENE_MODE_INDOORS;
+            } else if (!strcmp(new_scene_mode_str, "backlight")) {
+                new_scene_mode = SCENE_MODE_AGAINST_LIGHT;
+            } else if (!strcmp(new_scene_mode_str, "dusk-dawn")) {
+                new_scene_mode = SCENE_MODE_DAWN;
+            } else if (!strcmp(new_scene_mode_str, "fall-color")) {
+                new_scene_mode = SCENE_MODE_FALLCOLOR;
+            } else if (!strcmp(new_scene_mode_str, "text")) {
+                new_scene_mode = SCENE_MODE_TEXT;
             } else {
                 ALOGE("%s::unmatched scene_mode(%s)",
-                      __func__, new_scene_mode_str);   //action, night-portrait, theatre, steadyphoto
+                      __func__, new_scene_mode_str);
                 ret = UNKNOWN_ERROR;
             }
         }
@@ -1361,6 +1332,11 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                                 BACK_CAMERA_MACRO_FOCUS_DISTANCES_STR);
             } else if (!strcmp(new_focus_mode_str, FOCUS_MODE_FACEDETECTION)) {
                 new_focus_mode = FOCUS_MODE_FACEDETECT;
+                mParameters.set(CameraParameters::KEY_FOCUS_DISTANCES,
+                                BACK_CAMERA_AUTO_FOCUS_DISTANCES_STR);
+            } else if (!strcmp(new_focus_mode_str,
+                              (const char*)CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                new_focus_mode = FOCUS_MODE_CONTINUOUS;
                 mParameters.set(CameraParameters::KEY_FOCUS_DISTANCES,
                                 BACK_CAMERA_AUTO_FOCUS_DISTANCES_STR);
             } else {
@@ -1397,6 +1373,110 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                 ALOGE("ERR(%s):Fail on Camera->setZoom(%d)", __func__, new_zoom);
             } else {
                 mParameters.set(CameraParameters::KEY_ZOOM, new_zoom);
+            }
+        }
+
+        // ISO
+        const char *new_iso_str = params.get("iso");
+        ALOGV("%s : new_iso_str %s", __func__, new_iso_str);
+        if (new_iso_str != NULL) {
+            int new_iso = -1;
+            if (!strcmp(new_iso_str, "auto")) {
+                new_iso = ISO_AUTO;
+            } else if (!strcmp(new_iso_str, "ISO50")) {
+                new_iso = ISO_50;
+            } else if (!strcmp(new_iso_str, "ISO100")) {
+                new_iso = ISO_100;
+            } else if (!strcmp(new_iso_str, "ISO200")) {
+                new_iso = ISO_200;
+            } else if (!strcmp(new_iso_str, "ISO400")) {
+                new_iso = ISO_400;
+            } else if (!strcmp(new_iso_str, "ISO800")) {
+               new_iso = ISO_800;
+            } else if (!strcmp(new_iso_str, "ISO1600")) {
+               new_iso = ISO_1600;
+            } else {
+                ALOGE("ERR(%s):Invalid iso value(%s)", __func__, new_iso_str);
+                ret = UNKNOWN_ERROR;
+            }
+
+            if (0 <= new_iso) {
+                if (mCamera->setISO(new_iso) < 0) {
+                    ALOGE("ERR(%s):Fail on mCamera->setISO(new_iso(%d))", __func__, new_iso);
+                    ret = UNKNOWN_ERROR;
+                } else {
+                    mParameters.set("iso", new_iso_str);
+                }
+            }
+        }
+
+        // image effect
+        const char *new_image_effect_str = params.get(CameraParameters::KEY_EFFECT);
+        if (new_image_effect_str != NULL) {
+
+            int new_image_effect = -1;
+
+            if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_NONE))
+                new_image_effect = CAMERA_EFFECT_NONE;
+            else if (!strcmp(new_image_effect_str, "sharpen"))
+                new_image_effect = CAMERA_EFFECT_SHARPEN;
+            else if (!strcmp(new_image_effect_str, "purple"))
+                new_image_effect = CAMERA_EFFECT_PURPLE;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_NEGATIVE))
+                new_image_effect = CAMERA_EFFECT_NEGATIVE;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_SEPIA))
+                new_image_effect = CAMERA_EFFECT_SEPIA;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_AQUA))
+                new_image_effect = CAMERA_EFFECT_AQUA;
+            else if (!strcmp(new_image_effect_str, "green-tint"))
+                new_image_effect = CAMERA_EFFECT_GREEN;
+            else if (!strcmp(new_image_effect_str, "blue-tint"))
+                new_image_effect = CAMERA_EFFECT_BLUE;
+            else if (!strcmp(new_image_effect_str, "pink"))
+                new_image_effect = CAMERA_EFFECT_PINK;
+            else if (!strcmp(new_image_effect_str, "yellow"))
+                new_image_effect = CAMERA_EFFECT_YELLOW;
+            else if (!strcmp(new_image_effect_str, "red-tint"))
+                new_image_effect = CAMERA_EFFECT_RED;
+            else if (!strcmp(new_image_effect_str, "antique"))
+                new_image_effect = CAMERA_EFFECT_ANTIQUE;
+            else if (!strcmp(new_image_effect_str, CameraParameters::EFFECT_MONO))
+                new_image_effect = CAMERA_EFFECT_BW;
+            else {
+                //posterize, whiteboard, blackboard, solarize
+                ALOGE("ERR(%s):Invalid effect(%s)", __func__, new_image_effect_str);
+                ret = UNKNOWN_ERROR;
+            }
+
+            if (new_image_effect >= 0) {
+                if (mCamera->setImageEffect(new_image_effect) < 0) {
+                    ALOGE("ERR(%s):Fail on mCamera->setImageEffect(effect(%d))", __func__, new_image_effect);
+                    ret = UNKNOWN_ERROR;
+                } else {
+                    mParameters.set(CameraParameters::KEY_EFFECT, new_image_effect_str);
+                }
+            }
+        }
+
+        //JPEG image quality
+        int new_jpeg_quality = params.getInt(CameraParameters::KEY_JPEG_QUALITY);
+        ALOGV("%s : new_jpeg_quality %d", __func__, new_jpeg_quality);
+        /* we ignore bad values */
+        if (new_jpeg_quality >=1 && new_jpeg_quality <= 100) {
+            if (new_jpeg_quality > 90)
+                  new_jpeg_quality = JPEG_QUALITY_SUPERFINE;
+            else if (new_jpeg_quality > 75)
+                  new_jpeg_quality = JPEG_QUALITY_FINE;
+            else if (new_jpeg_quality > 50)
+                  new_jpeg_quality = JPEG_QUALITY_NORMAL;
+            else
+                  new_jpeg_quality = JPEG_QUALITY_ECONOMY;
+
+            if (mCamera->setJpegQuality(new_jpeg_quality) < 0) {
+                ALOGE("ERR(%s):Fail on mCamera->setJpegQuality(quality(%d))", __func__, new_jpeg_quality);
+                ret = UNKNOWN_ERROR;
+            } else {
+                mParameters.set(CameraParameters::KEY_JPEG_QUALITY, new_jpeg_quality);
             }
         }
     }
@@ -1464,18 +1544,19 @@ void CameraHardware::release()
             mRecordHeap[i] = NULL;
         }
     }
-
-    if (mCameraID == CAMERA_FF) {
-        if (mScaleHeap != NULL)
-            mScaleHeap->release(mScaleHeap);
-        if (mFrameScale != NULL)
-            mFrameScale->release(mFrameScale);
+    if (mPreviewHeap) {
+        mPreviewHeap->release(mPreviewHeap);
+        mPreviewHeap = NULL;
     }
-
-    if (mPreviewFrame != NULL)
-        mPreviewFrame->release(mPreviewFrame);
-
-    mCamera->Uninit(0);
+    if (mScaleHeap) {
+        mScaleHeap->release(mScaleHeap);
+        mScaleHeap = NULL;
+    }
+    if (mFrameScaled) {
+        mFrameScaled->release(mFrameScaled);
+        mFrameScaled = NULL;
+    }
+    mCamera->Uninit(STATE_PREVIEW);
     if ((mCameraID == CAMERA_FF) && (isStart_scaler))
         scale_deinit();
     mCamera->Close();
@@ -2107,14 +2188,5 @@ double CameraHardware::getGPSAltitude() const
         ALOGD("getGPSAltitude null \n");
         return 0;
     }
-}
-
-void CameraHardware::setSkipFrame(int frame)
-{
-    Mutex::Autolock lock(mSkipFrameLock);
-    if (frame < mSkipFrame)
-        return;
-
-    mSkipFrame = frame;
 }
 }; // namespace android

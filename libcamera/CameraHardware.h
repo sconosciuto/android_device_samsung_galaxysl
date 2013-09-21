@@ -63,9 +63,6 @@ typedef struct {
 
 class CameraHardware {
 public:
-    virtual sp<IMemoryHeap> getPreviewHeap() const;
-    virtual sp<IMemoryHeap> getRawHeap() const;
-
     virtual void setCallbacks(camera_notify_callback notify_cb,
                               camera_data_callback data_cb,
                               camera_data_timestamp_callback data_cb_timestamp,
@@ -75,7 +72,7 @@ public:
     virtual void        disableMsgType(int32_t msgType);
     virtual bool        msgTypeEnabled(int32_t msgType);
 
-    virtual int setPreviewWindow( struct preview_stream_ops *window);
+    virtual status_t setPreviewWindow( struct preview_stream_ops *window);
 
     virtual status_t    startPreview();
     virtual void        stopPreview();
@@ -156,7 +153,7 @@ private:
     };
 
     void initDefaultParameters(int CameraID);
-        void SetDSPKHz(unsigned int KHz);
+	void SetDSPKHz(unsigned int KHz);
 	int get_kernel_version();
 	void CreateExif(unsigned char* pInThumbnailData,int Inthumbsize,unsigned char* pOutExifBuf,int& OutExifSize,int flag);
 	void convertFromDecimalToGPSFormat(double arg1,int& arg2,int& arg3,double& arg4);
@@ -164,7 +161,6 @@ private:
 	double getGPSLatitude() const;
 	double getGPSLongitude() const;
 	double getGPSAltitude() const;
-	void setSkipFrame(int frame);
 
 	/* validating supported size */
 	bool validateSize(size_t width, size_t height,
@@ -177,30 +173,21 @@ private:
     camera_request_memory   mRequestMemory;
     preview_stream_ops_t*  mNativeWindow;
     camera_memory_t     *mRecordHeap[kBufferCount];
+    camera_memory_t     *mPreviewHeap;
 
+    // FFC preview resize
     camera_memory_t     *mScaleHeap;
-    camera_memory_t     *mFrameScale;
-    camera_memory_t     *mPreviewFrame;
+    camera_memory_t     *mFrameScaled;
 
     mutable Mutex       mLock;           // member property lock
     mutable Mutex       mPreviewLock;    // hareware v4l2 operation lock
     Mutex               mRecordingLock;
     CameraParameters    mParameters;
 
-    sp<MemoryHeapBase>  mHeap;         // format: 420
-    sp<MemoryBase>      mBuffer;
-    sp<MemoryHeapBase>  mPreviewHeap;
-    sp<MemoryBase>      mPreviewBuffer;
-	sp<MemoryHeapBase>  mRawHeap;      /* format: 422 */
-	sp<MemoryBase>      mRawBuffer;
-    sp<MemoryBase>      mBuffers[kBufferCount];		
-    //int mRecordBufferState[kBufferCount];
-
     mutable Mutex mSkipFrameLock;
             int mSkipFrame;
 
     V4L2Camera         *mCamera;
-    int                 mPreviewFrameSize;
 	
 	NEON_fpo Neon_Rotate;
 	NEON_FUNCTION_ARGS* neon_args;
@@ -243,7 +230,6 @@ private:
 
     int32_t             mMsgEnabled;
 
-    bool                previewStopped;
     bool                mRecordingEnabled;
 
 			double mPreviousGPSLatitude;

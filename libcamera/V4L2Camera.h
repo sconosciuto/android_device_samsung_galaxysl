@@ -22,6 +22,13 @@
 #define NB_BUFFER 6
 #define DEFAULT_FRAME_RATE 30
 
+#define STATE_PREVIEW      0
+#define STATE_PICTURE      1
+
+#define MODE_CAMERA        1
+#define MODE_CAMCORDER     2
+#define MODE_VT            3
+
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
 #include <linux/videodev.h>
@@ -127,6 +134,12 @@ public:
 	int setSharpness(int sharpness_value);
 	int setSaturation(int saturation_value);
 	int getSaturation(void);
+	int setImageEffect(int);
+	int getImageEffect(void);
+	int setJpegQuality(int jpeg_quality);
+	int getJpegQuality(void);
+	int setCamMode(int cam_mode);
+	int getCamMode(void);
 
 
     void * GrabPreviewFrame (int& index);
@@ -153,6 +166,9 @@ private:
     int mSaturation;
     int mBrightness;
     int mAutofocusRunning;
+    int mEffect;
+    int mJpegQuality;
+    int mCamMode;
 
     int nQueued;
     int nDequeued;
