@@ -16,14 +16,6 @@ on early-init
     symlink /storage/sdcard1 /emmc
     symlink /storage/sdcard1 /mnt/emmc
 
-    write /proc/sys/kernel/panic_on_oops 1
-    write /proc/sys/kernel/hung_task_timeout_secs 0
-    write /proc/cpu/alignment 4
-    write /proc/sys/kernel/sched_latency_ns 10000000
-    write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
-    write /proc/sys/kernel/sched_compat_yield 1
-    write /proc/sys/kernel/sched_child_runs_first 0
-
 on fs
 
     mkdir /radio 0775 radio radio
@@ -63,25 +55,8 @@ on post-fs-data
     chown system system /sys/vibrator/pwmvalue
     chmod 0660 /sys/vibrator/pwmvalue
 
-# change permissions for Camera
-    chown system camera /dev/video5
-    chown system camera /dev/video0
-    chmod 0660 /dev/video5
-    chmod 0660 /dev/video0
-
-#Permission for DspBridge
-    chmod 0666 /dev/DspBridge
-
-# change permissions for Overlay
-    chown system system /dev/video1
-    chmod 0660 /dev/video1
-
 # ISP Resizer DSSCOMP
     chmod 0777 /sys/devices/platform/dsscomp/isprsz/enable
-# DSSCOMP - HWC
-    chmod 0777 /dev/dsscomp
-# ION - MEMORY ALLOCATOR
-    chmod 0777 /dev/ion
 
 #Permissions for setting the DSP Frequency
     chown media root /sys/power/dsp_freq
@@ -107,17 +82,6 @@ on post-fs-data
     chmod 0777 /sys/devices/platform/omapdss/overlay1/enabled
     chmod 0777 /sys/devices/platform/omapdss/overlay2/enabled
 
-# change permissions for Previewer and Resizer
-    chown system system /dev/omap-previewer
-    chown system system /dev/omap-resizer
-    chmod 0660 /dev/omap-previewer
-    chmod 0660 /dev/omap-resizer
-
-    chown system system /dev/video6
-    chown system system /dev/video10
-    chmod 0660 /dev/video6
-    chmod 0660 /dev/video10
-
 # wi-fi
     mkdir /data/misc/wifi 0770 wifi wifi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
@@ -136,49 +100,11 @@ on post-fs-data
     mkdir /data/log 0775 root root
     chmod 0775 /data/log
 
-# change permission for uart_switch
-    chown radio radio /sys/class/sec/uart_switch/UART_SEL/value
-    chmod 660 /sys/class/sec/uart_switch/UART_SEL/value
-
 # create data/gps for GPS demon
     mkdir /data/gps 771 gps system
     chown gps system /data/gps
     chown gps root /sys/class/gps/GPS_PWR_EN/value
     chmod 660 /sys/class/gps/GPS_PWR_EN/value
-
-    # change permissions for Sensors
-    chown system system /sys/bus/i2c/drivers/cma3000_accl/4-001c
-    chown system system /sys/bus/i2c/drivers/cma3000_accl/4-001c/enable
-    chown system system /sys/bus/i2c/drivers/cma3000_accl/4-001c/delay
-    chown system system /sys/devices/platform/sfh7741.1
-    chown system system /sys/devices/platform/sfh7741.1/state
-    chown system system /sys/bus/i2c/drivers/bmp085/4-0077
-    chown system system /sys/bus/i2c/drivers/bmp085/4-0077/enable
-    chown system system /sys/bus/i2c/drivers/hmc5843/4-001e
-    chown system system /sys/bus/i2c/drivers/hmc5843/4-001e/enable
-    chown system system /sys/bus/i2c/drivers/hmc5843/4-001e/rate
-
-    # PowerHAL perms
-    chmod 0664 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-    chmod 0664 /sys/devices/system/cpu/cpu0/cpufreq/screen_off_max_freq
-    chown system system /sys/devices/system/cpu/cpu0/cpufreq/screen_off_max_freq
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/boostpulse
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/boost_factor
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/boost_factor
-    chmod 0664 /sys/devices/system/cpu/cpufreq/interactive/input_boost
-    chown system system /sys/devices/system/cpu/cpufreq/interactive/input_boost
 
 # change permissions for overlay managers and display devices
     chown system system /sys/devices/platform/omapdss/manager0/name
@@ -219,7 +145,6 @@ on post-fs-data
     chown system system /sys/devices/platform/omapdss/overlay1/enabled
     chown system system /sys/devices/platform/omapdss/overlay2/enabled
     chown system system /sys/devices/platform/omapdss/overlay3/enabled
-
     # change permissions for display timings to get the resolutions
     chown system system /sys/devices/platform/omapdss/display0/timings
     chown system system /sys/devices/platform/omapdss/display1/timings

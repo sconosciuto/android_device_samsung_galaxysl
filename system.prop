@@ -11,9 +11,6 @@ persist.sys.usb.config=mtp,adb
 ro.cwm.enable_key_repeat=true
 ro.cwm.repeatable_keys=115,114,158
 
-## Enable OMAP stuffs
-com.ti.omap_enhancement=true
-
 # Disable zram
 ro.zram.default=0
 

@@ -33,7 +33,8 @@ TARGET_NO_RADIOIMAGE := true
 
 TARGET_PROVIDES_INIT_TARGET_RC := true
 
-BOARD_NAND_PAGE_SIZE := 4096 -s 128
+BOARD_NAND_PAGE_SIZE := 4096
+BOARD_NAND_SPARE_SIZE := 128
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_PAGE_SIZE := 4096
@@ -48,7 +49,6 @@ TARGET_KERNEL_SOURCE := kernel/samsung/latona
 
 # recovery
 BOARD_HAS_NO_SELECT_BUTTON := true
-TARGET_RECOVERY_PRE_COMMAND := "echo 1 > /cache/.startrecovery; sync;"
 BOARD_CUSTOM_RECOVERY_KEYMAPPING := ../../device/samsung/galaxysl/recovery/recovery_keys.c
 BOARD_USES_BML_OVER_MTD := true
 TARGET_RECOVERY_FSTAB := device/samsung/galaxysl/fstab.latona

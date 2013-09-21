@@ -15,8 +15,7 @@
 # These are the hardware-specific configuration files
 PRODUCT_COPY_FILES := \
 	device/samsung/galaxysl/etc/gps.conf:system/etc/gps.conf \
-	device/samsung/galaxysl/etc/gps.xml:system/vendor/etc/gps.xml \
-	device/samsung/galaxysl/egl.cfg:system/lib/egl/egl.cfg
+	device/samsung/galaxysl/etc/gps.xml:system/vendor/etc/gps.xml
 
 # Init files
 PRODUCT_COPY_FILES += \
@@ -108,11 +107,8 @@ PRODUCT_COPY_FILES += \
 	frameworks/native/data/etc/android.hardware.wifi.direct.xml:system/etc/permissions/android.hardware.wifi.direct.xml \
 	frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
 	frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
-	frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
 	frameworks/native/data/etc/android.hardware.usb.accessory.xml:system/etc/permissions/android.hardware.usb.accessory.xml \
-	frameworks/native/data/etc/android.hardware.touchscreen.multitouch.distinct.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.distinct.xml \
 	frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
-	frameworks/native/data/etc/android.hardware.touchscreen.multitouch.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.xml \
 	frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml
 
 # Packages
@@ -215,7 +211,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
        ro.telephony.ril.v3=icccardstatus,datacall,signalstrength,facilitylock \
        ro.telephony.call_ring.multiple=false \
        ro.telephony.call_ring.delay=2000 \
-       dev.sfbootcomplete=0 \
        mobiledata.interfaces=pdp0,eth0,gprs,ppp0
 
 
