@@ -128,6 +128,21 @@ set_light_leds(struct light_state_t const *state)
 }
 
 static int
+set_light_buttons(struct light_device_t* dev,
+        struct light_state_t const* state)
+{
+    int brightness = rgb_to_brightness(state);
+    int err;
+
+    pthread_mutex_lock(&g_lock);
+    ALOGD("set_light_buttons: %d\n", brightness > 0 ? LEDS_LIGHT_ON : LEDS_LIGHT_OFF);
+    err = write_int(BUTTON_FILE, brightness > 0 ? LEDS_LIGHT_ON : LEDS_LIGHT_OFF);
+    pthread_mutex_unlock(&g_lock);
+
+    return err;
+}
+
+static int
 set_light_notification(struct light_device_t* dev,
         struct light_state_t const* state)
 {
@@ -155,6 +170,8 @@ static int open_lights(const struct hw_module_t* module, char const* name,
 
     if (0 == strcmp(LIGHT_ID_BACKLIGHT, name))
         set_light = set_light_backlight;
+    else if (0 == strcmp(LIGHT_ID_BUTTONS, name))
+        set_light = set_light_buttons;
     else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name))
         set_light = set_light_notification;
     else
