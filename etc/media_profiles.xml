@@ -89,7 +89,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="48000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>
 
         <EncoderProfile quality="cif" fileFormat="mp4" duration="30">
@@ -101,7 +101,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="48000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>
 
         <EncoderProfile quality="480p" fileFormat="mp4" duration="30">
@@ -113,7 +113,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="48000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>
 
         <EncoderProfile quality="720p" fileFormat="mp4" duration="30">
@@ -125,7 +125,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="48000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>      
 
         <EncoderProfile quality="timelapseqcif" fileFormat="mp4" duration="30">
@@ -195,7 +195,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="8000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>
 
         <EncoderProfile quality="cif" fileFormat="mp4" duration="30">
@@ -207,7 +207,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="16000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>
 
         <EncoderProfile quality="480p" fileFormat="mp4" duration="30">
@@ -219,7 +219,7 @@
             <Audio codec="aac"
                    bitRate="96000"
                    sampleRate="16000"
-                   channels="2" />
+                   channels="1" />
         </EncoderProfile>
 
         <ImageEncoding quality="95" />
