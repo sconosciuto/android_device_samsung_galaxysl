@@ -1,6 +1,3 @@
-# firmware
-firmware/samsung_mfc_fw.bin
-
 # graphics
 bin/pvrsrvinit
 bin/pvrsrvctl
