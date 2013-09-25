@@ -15,8 +15,12 @@ umask 0022
 cmp "$ROM_NVS" "$ORIG_NVS" > /dev/null 2>&1 && exit 0
 
 # Get the MAC address and remove the : symbols
+# Use the default nvs file in case the MAC address is not found
 macaddr=$(cat /efs/imei/.nvmac.info | sed 's/://g')
-[ $macaddr ] || exit 1
+if [ -z $macaddr ]; then
+    cp "$ROM_NVS" "$NEW_NVS";
+    exit 1;
+fi
 
 # The MAC address is stored in the nvs file in two pieces: the four
 # least-significant bytes in little-endian order starting at byte offset 3
