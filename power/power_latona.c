@@ -29,11 +29,10 @@
 #define CPUFREQ_ONDEMAND "/sys/devices/system/cpu/cpufreq/ondemand/"
 #define BOOSTPULSE_ONDEMAND (CPUFREQ_ONDEMAND "boostpulse")
 
-#define MAX_BUF_SZ  10
+#define SAMPLING_RATE_SCREEN_ON "90000"
+#define SAMPLING_RATE_SCREEN_OFF "500000"
 
-/* initialize to something safe */
-static char screen_off_max_freq[MAX_BUF_SZ] = "600000";
-static char scaling_max_freq[MAX_BUF_SZ] = "1000000";
+#define MAX_BUF_SZ  10
 
 struct latona_power_module {
     struct power_module base;
@@ -84,7 +83,10 @@ int sysfs_read(const char *path, char *buf, size_t size)
 static void latona_power_init(struct power_module *module)
 {
     sysfs_write(CPUFREQ_ONDEMAND "boostfreq", "600000");
-    sysfs_write(CPUFREQ_ONDEMAND "sampling_rate", "90000");
+    sysfs_write(CPUFREQ_ONDEMAND "sampling_rate", SAMPLING_RATE_SCREEN_ON);
+    sysfs_write(CPUFREQ_ONDEMAND "sampling_down_factor", "2");
+    sysfs_write(CPUFREQ_ONDEMAND "io_is_busy", "1");
+    sysfs_write(CPUFREQ_CPU0 "screen_off_max_freq", "800000");
 }
 
 static int boostpulse_open(struct latona_power_module *latona)
@@ -110,6 +112,8 @@ static int boostpulse_open(struct latona_power_module *latona)
 
 static void latona_power_set_interactive(struct power_module *module, int on)
 {
+        sysfs_write(CPUFREQ_ONDEMAND  "sampling_rate",
+                on ? SAMPLING_RATE_SCREEN_ON : SAMPLING_RATE_SCREEN_OFF);
 }
 
 static void latona_power_hint(struct power_module *module, power_hint_t hint,
