@@ -418,7 +418,7 @@ status_t AudioHardware::setMode(int mode)
                 if (ctl != NULL) {
                     ALOGV("setMode() reset Playback Path to RCV");
                     TRACE_DRIVER_IN(DRV_MIXER_SEL)
-		    mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
+                    mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
                     mixer_ctl_set_enum_by_string(ctl, "RCV");
                     TRACE_DRIVER_OUT
                 }
@@ -811,27 +811,33 @@ status_t AudioHardware::setIncallPath_l(uint32_t device)
                 if (ctl != NULL) {
                     ALOGV("setIncallPath_l() Voice Call Path, (%x)", device);
                     TRACE_DRIVER_IN(DRV_MIXER_SEL)
-		    const char *route = getVoiceRouteFromDevice(device);
-		    const char *max97000path;
-		    //Latona requires MAX97000 mixer ctl to enable sound output
-			bool mIsAmpEnable=true;
-	    		if(strcmp(route,"SPK")==0)
-				max97000path="INA -> SPK";
-	    		else if((strcmp(route,"3HP")==0)||(strcmp(route,"4HP")==0)){			
-				max97000path="INB -> HP";
-				mIsAmpEnable=false;
-	    		}else
-				// MAX97000 mixer ctl is not required
-				max97000path=NULL;
 
-			if(mIsAmpEnable)
-				mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
+                    const char *route = getVoiceRouteFromDevice(device);
+                    const char *max97000path;
 
-			//Voice Call Path Mixer ctl
-			mixer_ctl_set_enum_by_string(ctl, route);
+                    //Latona requires MAX97000 mixer ctl to enable sound output
+                    bool mIsAmpEnable = true;
 
-			if(max97000path!=NULL)
-	    			mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode"), max97000path);
+                    if (strcmp(route, "SPK") == 0) {
+                        max97000path = "INA -> SPK";
+                    } else if ((strcmp(route, "3HP") == 0) || (strcmp(route, "4HP") == 0)) {
+                        max97000path = "INB -> HP";
+                        mIsAmpEnable = false;
+                    } else {
+                        // MAX97000 mixer ctl is not required
+                        max97000path = NULL;
+                    }
+
+                    if (mIsAmpEnable) {
+                        mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
+                    }
+
+                    //Voice Call Path Mixer ctl
+                    mixer_ctl_set_enum_by_string(ctl, route);
+
+                    if (max97000path != NULL) {
+                        mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode"), max97000path);
+                    }
 
                     TRACE_DRIVER_OUT
                 }
@@ -935,17 +941,22 @@ status_t AudioHardware::setFMRadioPath_l(uint32_t device)
 
         if (ctl != NULL) {
             ALOGV("setFMRadioPath_l() FM Radio Path, (%s)", fmpath);
+
             TRACE_DRIVER_IN(DRV_MIXER_SEL)
             mixer_ctl_select(ctl, fmpath);
-	    //Latona requires MAX97000 mixer ctl to enable sound output
-	    if(strcmp(fmpath,"SPK")==0)
-			fmpath="INA -> SPK";
-	    else if(strcmp(fmpath,"HP")==0)
-			fmpath="INB -> HP";
-	    else
-			fmpath="INB -> HP";
-	    ctl = mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode");
-	    mixer_ctl_set_enum_by_string(ctl, fmpath);
+
+            //Latona requires MAX97000 mixer ctl to enable sound output
+            if (strcmp(fmpath, "SPK") == 0) {
+                fmpath = "INA -> SPK";
+            } else if (strcmp(fmpath, "HP") == 0) {
+                fmpath = "INB -> HP";
+            } else {
+                fmpath = "INB -> HP";
+            }
+
+            ctl = mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode");
+            mixer_ctl_set_enum_by_string(ctl, fmpath);
+
             TRACE_DRIVER_OUT
         } else {
             ALOGE("setFMRadioPath_l() could not get FM Radio Path mixer ctl");
@@ -956,22 +967,26 @@ status_t AudioHardware::setFMRadioPath_l(uint32_t device)
         TRACE_DRIVER_OUT
 
         const char *route = getOutputRouteFromDevice(device);
-	const char *max97000path;
+        const char *max97000path;
         ALOGV("setFMRadioPath_l() Playpack Path, (%s)", route);
         if (ctl) {
             TRACE_DRIVER_IN(DRV_MIXER_SEL)
-	    mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
+
+            mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
             mixer_ctl_select(ctl, route);
-	    //Latona requires MAX97000 mixer ctl to enable sound output
-	    if(strcmp(route,"SPK")==0)
-			max97000path="INA -> SPK";
-	    else if(strcmp(route,"HP")==0)
-			max97000path="INB -> HP";
-	    else
-			max97000path=NULL;
-	    
-	    if(max97000path!=NULL)
-	    	mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode"), max97000path);
+
+            //Latona requires MAX97000 mixer ctl to enable sound output
+            if (strcmp(route, "SPK") == 0) {
+                max97000path = "INA -> SPK";
+            } else if (strcmp(route, "HP") == 0) {
+                max97000path = "INB -> HP";
+            } else {
+                max97000path = NULL;
+            }
+
+            if (max97000path != NULL) {
+                mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode"), max97000path);
+            }
 
             TRACE_DRIVER_OUT
         }
@@ -981,7 +996,7 @@ status_t AudioHardware::setFMRadioPath_l(uint32_t device)
     } else {
         ALOGE("setFMRadioPath_l() mixer is not open");
     }
-	
+
     return NO_ERROR;
 }
 #endif
@@ -1038,23 +1053,22 @@ void AudioHardware::closePcmOut_l()
         mPcm = NULL;
     }
 
-	setIdleMode();
+    setIdleMode();
 }
 
 void AudioHardware::setIdleMode()
 {
-	//Set TWL4030 to Idle Mode after closing the PCM Device
-	if((mMode != AudioSystem::MODE_IN_CALL) && (mMixerOpenCnt==0))
-	{
-        	openMixer_l();
+    //Set TWL4030 to Idle Mode after closing the PCM Device
+    if ((mMode != AudioSystem::MODE_IN_CALL) && (mMixerOpenCnt == 0)) {
+        openMixer_l();
 
-		struct mixer_ctl *ctl = mixer_get_ctl_by_name(mMixer, "Amp Enable");
-		mixer_ctl_set_enum_by_string(ctl, "OFF");
-		ctl= mixer_get_ctl_by_name(mMixer, "Idle Mode");
-		mixer_ctl_set_enum_by_string(ctl, "off");
+        struct mixer_ctl *ctl = mixer_get_ctl_by_name(mMixer, "Amp Enable");
+        mixer_ctl_set_enum_by_string(ctl, "OFF");
+        ctl= mixer_get_ctl_by_name(mMixer, "Idle Mode");
+        mixer_ctl_set_enum_by_string(ctl, "off");
 
-        	closeMixer_l();
-	}
+        closeMixer_l();
+    }
 }
 
 struct mixer *AudioHardware::openMixer_l()
@@ -1524,30 +1538,35 @@ status_t AudioHardware::AudioStreamOutALSA::open_l()
     }
     if (mHardware->mode() != AudioSystem::MODE_IN_CALL) {
         const char *route = mHardware->getOutputRouteFromDevice(mDevices);
-	const char *max97000path;
+        const char *max97000path;
         ALOGV("write() wakeup setting route %s", route);
         if (mRouteCtl) {
             TRACE_DRIVER_IN(DRV_MIXER_SEL)
-	    //Latona requires MAX97000 mixer ctl to enable sound output
-	    bool mIsAmpEnable=true;
-	    if(strcmp(route,"SPK")==0){
-			max97000path="INA -> SPK";
-			mIsAmpEnable=false;
-	    }else if(strcmp(route,"HP")==0)
-			max97000path="INB -> HP";
-	    else if(strcmp(route,"SPK_HP")==0)
-			max97000path="INB -> SPK and HP";
-	    else
-			max97000path=NULL;
-   
-	    if(mIsAmpEnable)
-		mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
 
-	    //Playback Path Mixer ctl
+            //Latona requires MAX97000 mixer ctl to enable sound output
+            bool mIsAmpEnable = true;
+
+            if (strcmp(route, "SPK") == 0) {
+                max97000path = "INA -> SPK";
+                mIsAmpEnable = false;
+            } else if (strcmp(route, "HP") == 0) {
+                max97000path = "INB -> HP";
+            } else if (strcmp(route, "SPK_HP") == 0) {
+                max97000path = "INB -> SPK and HP";
+            } else {
+                max97000path = NULL;
+            }
+
+            if (mIsAmpEnable) {
+                mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "Amp Enable"), "OFF");
+			}
+
+            //Playback Path Mixer ctl
             mixer_ctl_set_enum_by_string(mRouteCtl, route);
 
-	    if(max97000path!=NULL)
-	    	mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode"), max97000path);
+            if (max97000path != NULL) {
+                mixer_ctl_set_enum_by_string(mixer_get_ctl_by_name(mMixer, "MAX97000 Output Mode"), max97000path);
+            }
 
             TRACE_DRIVER_OUT
         }
