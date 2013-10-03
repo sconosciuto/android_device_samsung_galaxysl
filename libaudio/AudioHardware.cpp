@@ -514,8 +514,18 @@ status_t AudioHardware::setParameters(const String8& keyValuePairs)
         if (value == BT_NREC_VALUE_ON) {
             mBluetoothNrec = true;
         } else {
-            mBluetoothNrec = false;
+            /*
+             * Answering phone calls with a BT headset always disables the
+             * noise reduction and echo cancellation, impacting the quality
+             * of the sound.
+             */
+
+            /*mBluetoothNrec = false;
             ALOGD("Turning noise reduction and echo cancellation off for BT "
+                 "headset");*/
+
+            mBluetoothNrec = true;
+            ALOGD("Force noise reduction and echo cancellation on for BT "
                  "headset");
         }
         param.remove(String8(BT_NREC_KEY));
