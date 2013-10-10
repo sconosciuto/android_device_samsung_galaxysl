@@ -19,7 +19,7 @@ public class VibratorIntensity extends DialogPreference implements OnClickListen
     private static final int DEFAULT_VALUE = 127;
     private static final int MAX_VALUE = 127;
     private static final int MIN_VALUE = 0;
-    private static final String SETTING_KEY = DeviceSettings.KEY_TOUCHKEYS_SENSITIVITY;
+    private static final String SETTING_KEY = DeviceSettings.KEY_VIBRATOR_INTENSITY;
     private static final int TITLE = R.string.vibrator_intensity_seekbar_title;
 
     private ScreenSeekBar mSeekBar;
@@ -130,8 +130,7 @@ public class VibratorIntensity extends DialogPreference implements OnClickListen
 
         @Override
         public void onStartTrackingTouch(SeekBar seekBar) {
-            int value = mSeekBar.getProgress() + MIN_VALUE;
-            writeConfig(value);
+            // Do nothing
         }
 
         @Override
