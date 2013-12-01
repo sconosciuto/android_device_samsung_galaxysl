@@ -45,6 +45,9 @@ on post-fs
     # symlink for SamsungRIL
     symlink /radio/modem.bin /dev/block/bml13
 
+    # change UART owner
+    write /sys/devices/platform/switch-sio/uart_sel MODEM
+
 on post-fs-data
     chown system system /sys/class/backlight/omap_bl/brightness
 
