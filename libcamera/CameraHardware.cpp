@@ -348,11 +348,13 @@ void CameraHardware::initDefaultParameters(int CameraID)
     p.set("iso", "auto");
 
     //Extra Parameters - GalaxySL
-    mCamera->setISO(ISO_AUTO);
-    mCamera->setMetering(METERING_CENTER);
     mCamera->setContrast(CONTRAST_DEFAULT);
-    mCamera->setSharpness(SHARPNESS_DEFAULT);
-    mCamera->setSaturation(SATURATION_DEFAULT);
+    if (CameraID == CAMERA_BF) {
+        mCamera->setISO(ISO_AUTO);
+        mCamera->setMetering(METERING_CENTER);
+        mCamera->setSharpness(SHARPNESS_DEFAULT);
+        mCamera->setSaturation(SATURATION_DEFAULT);
+    }
 
     if (setParameters(p) != NO_ERROR) {
         ALOGE("Failed to set default parameters?!");
@@ -901,9 +903,6 @@ int CameraHardware::autoFocusThread()
 
     ALOGV("%s : starting", __func__);
 
-    //dhiru1602 :  Release focus lock when autofocus is called again.
-    mCamera->setAEAWBLockUnlock(0, 0);
-
     /* block until we're told to start. we don't want to use
      * a restartable thread and requestExitAndWait() in cancelAutoFocus()
      * because it would cause deadlock between our callbacks and the
@@ -926,6 +925,10 @@ int CameraHardware::autoFocusThread()
         return NO_ERROR;
     }
     mFocusLock.unlock();
+
+    //dhiru1602 :  Release focus lock when autofocus is called again.
+    mCamera->setAEAWBLockUnlock(0, 0);
+
     ALOGV("%s : calling setAutoFocus", __func__);
     if (mCamera->setAutofocus() < 0) {
         ALOGE("ERR(%s):Fail on mSecCamera->setAutofocus()", __func__);
@@ -968,7 +971,8 @@ status_t CameraHardware::autoFocus()
 status_t CameraHardware::cancelAutoFocus()
 {
 
-    if (mPreviewThread == NULL) return NO_ERROR;
+    if (mPreviewThread == NULL || mCameraID == CAMERA_FF)
+        return NO_ERROR;
 
     if (mCamera->cancelAutofocus() < 0) {
         ALOGE("ERR(%s):Fail on mCamera->cancelAutofocus()", __func__);
