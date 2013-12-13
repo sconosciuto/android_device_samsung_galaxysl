@@ -235,7 +235,7 @@ void CameraHardware::initDefaultParameters(int CameraID)
         parameterString.append(",");
         parameterString.append(CameraParameters::FOCUS_MODE_MACRO);
         parameterString.append(",");
-        parameterString.append(CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
+        parameterString.append(CameraParameters::FOCUS_MODE_INFINITY);
         parameterString.append(",");
         parameterString.append(FOCUS_MODE_FACEDETECTION);
         p.set(CameraParameters::KEY_SUPPORTED_FOCUS_MODES,
@@ -1336,8 +1336,8 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
                 mParameters.set(CameraParameters::KEY_FOCUS_DISTANCES,
                                 BACK_CAMERA_AUTO_FOCUS_DISTANCES_STR);
             } else if (!strcmp(new_focus_mode_str,
-                              (const char*)CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                new_focus_mode = FOCUS_MODE_CONTINUOUS;
+                              (const char*)CameraParameters::FOCUS_MODE_INFINITY)) {
+                new_focus_mode = FOCUS_MODE_AUTO; //Override previous focus mode
                 mParameters.set(CameraParameters::KEY_FOCUS_DISTANCES,
                                 BACK_CAMERA_AUTO_FOCUS_DISTANCES_STR);
             } else {
