@@ -662,12 +662,10 @@ void V4L2Camera::GrabRawFrame(void *previewBuffer, unsigned int width, unsigned 
     nQueued++;
 }
 
-camera_memory_t* V4L2Camera::GrabJpegFrame(camera_request_memory mRequestMemory, int& mfilesize, bool IsFrontCam)
+void* V4L2Camera::GrabJpegFrame(int& mfilesize, bool IsFrontCam)
 {
-    unsigned char * outputBuffer;
     unsigned long fileSize = 0;
     int ret;
-    camera_memory_t* picture = NULL;
 
     videoIn->buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     videoIn->buf.memory = V4L2_MEMORY_MMAP;
@@ -682,12 +680,6 @@ camera_memory_t* V4L2Camera::GrabJpegFrame(camera_request_memory mRequestMemory,
         }
         nDequeued++;
 
-        //Latona Front Camera doesn't support Image Processing. Manually Encode the JPEG
-        if (IsFrontCam) {
-            ALOGV("YUVU Format");
-            fileSize =  videoIn->width * videoIn->height * 2;
-        }
-
         ALOGV("GrabJpegFrame - Enqueue buffer");
 
         /* Enqueue buffer */
@@ -698,16 +690,17 @@ camera_memory_t* V4L2Camera::GrabJpegFrame(camera_request_memory mRequestMemory,
         }
         nQueued++;
 
-        if (!IsFrontCam) {
-            fileSize = GetJpegImageSize();
+        //Latona Front Camera doesn't support Image Processing. Manually Encode the JPEG
+        if (IsFrontCam) {
+            ALOGV("YUVU Format");
+            mfilesize =  videoIn->width * videoIn->height * 2;
+        } else {
+            mfilesize = GetJpegImageSize();
         }
-        picture = mRequestMemory(-1, fileSize, 1, NULL);
-        picture->data = (unsigned char*)videoIn->mem[videoIn->buf.index];
-        mfilesize = fileSize;
         break;
     } while (0);
 
-    return picture;
+    return (videoIn->mem[videoIn->buf.index]);
 }
 
 int V4L2Camera::GetJpegImageSize()

@@ -232,7 +232,7 @@ int fill_data (OMX_BUFFERHEADERTYPE *pBuf, void * inputBuffer, int buffSize)
     return nRead;
 }
 
-int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, int quality)
+int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, int quality, unsigned char* pExifBuf, int ExifSize, int ThumbWidth, int ThumbHeight)
 {
 
     OMX_HANDLETYPE pHandle;
@@ -311,20 +311,23 @@ int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, in
     nWidth=width;
     nHeight=height;
     inputformat=2;
-    qualityfactor=100;
-    buffertype=1;   
+    qualityfactor = quality;
+    buffertype=1;
 
     imageinfo->nThumbnailWidth_app0 = 0;
     imageinfo->nThumbnailHeight_app0 = 0;
-    imageinfo->nThumbnailWidth_app1 = 0;
-    imageinfo->nThumbnailHeight_app1 = 0;
+    imageinfo->nThumbnailWidth_app1 = ThumbWidth;
+    imageinfo->nThumbnailHeight_app1 = ThumbHeight;
     imageinfo->nThumbnailWidth_app5 = 0;
     imageinfo->nThumbnailHeight_app5 = 0;
     imageinfo->nThumbnailWidth_app13 = 0;
     imageinfo->nThumbnailHeight_app13 = 0;
 
     imageinfo->bAPP0 = OMX_FALSE;
-    imageinfo->bAPP1 = OMX_FALSE;
+    if (ThumbWidth > 0 && ThumbHeight > 0)
+        imageinfo->bAPP1 = OMX_TRUE;
+    else
+        imageinfo->bAPP1 = OMX_FALSE;
     imageinfo->bAPP5 = OMX_FALSE;
     imageinfo->bAPP13 = OMX_FALSE;
     imageinfo->nComment = OMX_FALSE;
@@ -418,7 +421,7 @@ int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, in
 	pInPortDef->format.image.nFrameHeight = nHeight;
 	pInPortDef->format.image.nSliceHeight = -1;
 	pInPortDef->format.image.bFlagErrorConcealment = OMX_FALSE;
-    pInPortDef->format.image.eColorFormat =  OMX_COLOR_FormatCbYCrY;
+	pInPortDef->format.image.eColorFormat =  OMX_COLOR_FormatCbYCrY;
 	pInPortDef->format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
 
 	nMultFactor = (nWidth + 16 - 1)/16;
@@ -427,7 +430,7 @@ int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, in
 	nMultFactor = (nHeight + 16 - 1)/16;
 	nHeightNew = (int)(nMultFactor) * 16;
 	
-    pInPortDef->nBufferSize = (nWidthNew * nHeightNew * 2);
+	pInPortDef->nBufferSize = (nWidthNew * nHeightNew * 2);
 	if (pInPortDef->nBufferSize < 400) {
 	    pInPortDef->nBufferSize = 400;
 	}
@@ -489,7 +492,8 @@ int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, in
 	pOutPortDef->nBufferSize += 12288;
 
 
-    pOutPortDef->format.image.eColorFormat =  OMX_COLOR_FormatCbYCrY; 
+	pOutPortDef->format.image.eColorFormat =  OMX_COLOR_FormatCbYCrY;
+	pOutPortDef->format.image.eCompressionFormat = OMX_IMAGE_CodingEXIF;
 
 	error = OMX_SetParameter (pHandle, OMX_IndexParamPortDefinition, pOutPortDef);
 	if ( error != OMX_ErrorNone ) {
@@ -544,6 +548,32 @@ int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, in
 	}
 	for (nCounter = 0; nCounter < NUM_OF_BUFFERSJPEG; nCounter++) {
 	    error = OMX_UseBuffer(pHandle, &pOutBuff[nCounter], nIndex2, (void*)&sJPEGEnc_CompID, pOutPortDef->nBufferSize,pOutBuffer[nCounter]); 
+	}
+
+	if (imageinfo->bAPP1) {
+		JPEG_APPTHUMB_MARKER sAPP1;
+		sAPP1.bMarkerEnabled = OMX_TRUE;
+
+		/* set JFIF marker buffer */
+		sAPP1.nThumbnailWidth = imageinfo->nThumbnailWidth_app1;
+		sAPP1.nThumbnailHeight = imageinfo->nThumbnailHeight_app1;
+
+		sAPP1.nMarkerSize = ExifSize + 4;
+		sAPP1.pMarkerBuffer = (OMX_U8*)pExifBuf;
+
+		eError = OMX_GetExtensionIndex(pHandle, "OMX.TI.JPEG.encoder.Config.APP1", (OMX_INDEXTYPE*)&nCustomIndex);
+		if ( eError != OMX_ErrorNone ) {
+			printf("%d::APP_Error at function call: %x\n", __LINE__, eError);
+			eError = OMX_ErrorUndefined;
+			goto EXIT;
+		}
+
+		eError = OMX_SetConfig(pHandle, nCustomIndex, &sAPP1);
+		if ( eError != OMX_ErrorNone ) {
+			printf("%d::APP_Error at function call: %x\n", __LINE__, eError);
+			eError = OMX_ErrorUndefined;
+			goto EXIT;
+		}
 	}
 
 	ALOGD("Waiting for OMX_StateIdle\n");

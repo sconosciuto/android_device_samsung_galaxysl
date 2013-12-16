@@ -146,7 +146,7 @@ public:
     void * GrabRecordFrame (int& index);
     void ReleaseRecordFrame (int index);
     void GrabRawFrame(void *previewBuffer, unsigned int width, unsigned int height);
-    camera_memory_t* GrabJpegFrame (camera_request_memory mRequestMemory,int& mfilesize,bool IsFrontCam);
+    void * GrabJpegFrame (int& mfilesize,bool IsFrontCam);
     void convert(unsigned char *buf, unsigned char *rgb, int width, int height);
 
 private:

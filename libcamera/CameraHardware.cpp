@@ -52,7 +52,7 @@
 #define KERNEL_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 #define MAX_STR_LEN 35
-#define EXIF_FILE_SIZE 28800
+#define EXIF_FILE_SIZE 65535
 
 #define DSP3630_KHZ_MIN 260000
 #define DSP3630_KHZ_MAX 800000
@@ -246,9 +246,9 @@ void CameraHardware::initDefaultParameters(int CameraID)
         p.set(CameraParameters::KEY_FOCUS_DISTANCES,
               BACK_CAMERA_AUTO_FOCUS_DISTANCES_STR);
         p.set(CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES,
-              "320x240,0x0");
-        p.set(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, "320");
-        p.set(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, "240");
+              "640x480,0x0");
+        p.set(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, "640");
+        p.set(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, "480");
         p.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES, "30");
         p.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE, "(15000,30000)");
         p.set(CameraParameters::KEY_PREVIEW_FPS_RANGE, "15000,30000");
@@ -1038,22 +1038,25 @@ int CameraHardware::pictureThread()
     //TODO xxx : Optimize the memory capture call. Too many memcpy
     if (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE) {
         ALOGV("mJpegPictureCallback");
-        int JpegImageSize, JpegExifSize;
+        void* mRawBuffer;
+        int JpegImageSize, JpegExifSize, JpegThumbnailSize, JpegThumbnailOffset;
 
-        int framesize_yuv = w * h * 2;
-        camera_memory_t *mScaleHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
-        camera_memory_t *mRawBuffer = mRequestMemory(-1, framesize_yuv, 1, NULL);
-        camera_memory_t *mRotateHeap = mRequestMemory(-1, framesize_yuv, 1, NULL);
+        int framesize = w * h * 2;
+        camera_memory_t *ExifHeap = mRequestMemory(-1, EXIF_FILE_SIZE, 1, 0);
+        camera_memory_t *mem;
 
         if (mCameraID == CAMERA_FF) {
-            mRawBuffer = mCamera->GrabJpegFrame(mRequestMemory, JpegImageSize, true);
-            if (scale_process((void*)mRawBuffer->data, PREVIEW_WIDTH, PREVIEW_HEIGHT, (void*)mScaleHeap->data, PREVIEW_HEIGHT, PREVIEW_WIDTH, 0, PIX_YUV422I, 1)) {
+            camera_memory_t *mScaleHeap = mRequestMemory(-1, framesize, 1, NULL);
+            camera_memory_t *mRotateHeap = mRequestMemory(-1, framesize, 1, NULL);
+
+            mRawBuffer = mCamera->GrabJpegFrame(JpegImageSize, true);
+            if (scale_process(mRawBuffer, w, h, (void*)mScaleHeap->data, h, w, 0, PIX_YUV422I, 1)) {
                 ALOGE("scale_process() failed\n");
             }
             neon_args->pIn = (uint8_t*)mScaleHeap->data;
             neon_args->pOut = (uint8_t*)mRotateHeap->data;
-            neon_args->width = PREVIEW_HEIGHT;
-            neon_args->height = PREVIEW_WIDTH;
+            neon_args->width = h;
+            neon_args->height = w;
             neon_args->rotate = NEON_ROT90;
             int error = 0;
             if (Neon_Rotate != NULL)
@@ -1064,34 +1067,40 @@ int CameraHardware::pictureThread()
             if (error < 0) {
                 ALOGE("Error in Rotation 90");
             }
-        } else
-            picture = mCamera->GrabJpegFrame(mRequestMemory, JpegImageSize, false);
-        unsigned char* pExifBuf = new unsigned char[65536];
 
-        camera_memory_t *ExifHeap = mRequestMemory(-1, EXIF_FILE_SIZE, 1, 0);
+            CreateExif(NULL, 0, (unsigned char*)ExifHeap->data, JpegExifSize, 0);
 
-        //TODO : dhiru1602- Include EXIF Thumbnail for JPEG Images
-        CreateExif(NULL, 0, (unsigned char*)ExifHeap->data, JpegExifSize, 1);
-
-        if (mCameraID == CAMERA_FF) {
-            picture = mRequestMemory(-1, framesize_yuv, 1, NULL);
+            picture = mRequestMemory(-1, framesize, 1, NULL);
             JpegImageSize = encodeImage(picture->data,                          //Output Buffer
                                         mRotateHeap->data,                      // Input Buffer
-                                        PREVIEW_WIDTH,                          //Image Width
-                                        PREVIEW_HEIGHT,                         //Image Height
-                                        100);                                   //Quality
+                                        w,                                      //Image Width
+                                        h,                                      //Image Height
+                                        100,                                    //Quality
+                                        (unsigned char*)ExifHeap->data,         //JPEG Exif Buffer
+                                        JpegExifSize,                           //JPEG Exif Size
+                                        mThumbnailWidth,                        //Thumbnail Width
+                                        mThumbnailHeight);                      //Thumbnail Height
             mScaleHeap->release(mScaleHeap);
-            mRawBuffer->release(mRawBuffer);
             mRotateHeap->release(mRotateHeap);
+
+            mem = mRequestMemory(-1, JpegImageSize, 1, 0);
+            memcpy(mem->data, picture->data, JpegImageSize);
+        } else {
+            mRawBuffer = mCamera->GrabJpegFrame(JpegImageSize, false);
+            picture = mRequestMemory(-1, sizeof(unsigned char*), 1, NULL);
+            picture->data = (unsigned char*)mRawBuffer;
+            JpegThumbnailSize = mCamera->GetThumbNailDataSize();
+            JpegThumbnailOffset = mCamera->GetThumbNailOffset();
+            CreateExif((unsigned char*)((uint8_t*)mRawBuffer + JpegThumbnailOffset), JpegThumbnailSize, (unsigned char*)ExifHeap->data, JpegExifSize, 1);
+
+            mem = mRequestMemory(-1, JpegImageSize + JpegExifSize, 1, 0);
+            uint8_t *ptr = (uint8_t*)mem->data;
+            memcpy(ptr, picture->data, 2); ptr += 2;
+            memcpy(ptr, ExifHeap->data, JpegExifSize); ptr += JpegExifSize;
+            memcpy(ptr, (uint8_t*)picture->data + 2, JpegImageSize - 2);
         }
 
         ALOGD("JpegExifSize=%d, JpegImageSize=%d", JpegExifSize, JpegImageSize);
-
-        camera_memory_t *mem = mRequestMemory(-1, JpegImageSize + JpegExifSize, 1, 0);
-        uint8_t *ptr = (uint8_t*)mem->data;
-        memcpy(ptr, picture->data, 2); ptr += 2;
-        memcpy(ptr, ExifHeap->data, JpegExifSize); ptr += JpegExifSize;
-        memcpy(ptr, (uint8_t*)picture->data + 2, JpegImageSize - 2);
 
         mDataCb(CAMERA_MSG_COMPRESSED_IMAGE, mem, 0, NULL, mCallbackCookie);
 
@@ -1249,6 +1258,17 @@ status_t CameraHardware::setParameters(const CameraParameters& params)
         if ((new_min_fps > new_max_fps) ||
             (new_min_fps < 0) || (new_max_fps < 0))
             ret = UNKNOWN_ERROR;
+    }
+
+    // JPEG thumbnail size
+    int new_jpeg_thumbnail_width = params.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
+    int new_jpeg_thumbnail_height = params.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
+    if (mThumbnailWidth != new_jpeg_thumbnail_width || mThumbnailHeight <= new_jpeg_thumbnail_height) {
+        mThumbnailWidth = new_jpeg_thumbnail_width;
+        mThumbnailHeight = new_jpeg_thumbnail_height;
+    } else {
+        mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, mThumbnailWidth);
+        mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, mThumbnailHeight);
     }
 
     const char *new_focus_mode_str = params.get(CameraParameters::KEY_FOCUS_MODE);
@@ -1592,8 +1612,12 @@ void CameraHardware::CreateExif(unsigned char* pInThumbnailData, int Inthumbsize
 
     struct tm *t = NULL;
     time_t nTime;
-    time(&nTime);
+    nTime = atol(mParameters.get(mParameters.KEY_GPS_TIMESTAMP));
     t = localtime(&nTime);
+    m_gpsHour = t->tm_hour;
+    m_gpsMin  = t->tm_min;
+    m_gpsSec  = t->tm_sec;
+    strftime((char *)m_gps_date, 11, "%Y-%m-%d", t);
 
     if (t != NULL) {
         sprintf((char*)&ExifInfo.dateTimeOriginal, "%4d:%02d:%02d %02d:%02d:%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
@@ -2004,7 +2028,7 @@ void CameraHardware::CreateExif(unsigned char* pInThumbnailData, int Inthumbsize
             break;
         }
 
-        ExifInfo.meteringMode               = mCamera->getMetering();
+        ExifInfo.meteringMode               = METERING_CENTER;
         ExifInfo.whiteBalance               = 0;
         ExifInfo.saturation                 = 0;
         ExifInfo.sharpness                  = 0;
@@ -2103,7 +2127,7 @@ void CameraHardware::CreateExif(unsigned char* pInThumbnailData, int Inthumbsize
         ExifInfo.GPSTimestamp[2].denominator = 1;
 
         //GPS_ProcessingMethod
-        strcpy((char*)ExifInfo.GPSProcessingMethod, mPreviousGPSProcessingMethod);
+        strcpy((char*)ExifInfo.GPSProcessingMethod, mParameters.get(mParameters.KEY_GPS_PROCESSING_METHOD));
 
         //GPS_Date_Stamp
         strcpy((char*)ExifInfo.GPSDatestamp, m_gps_date);

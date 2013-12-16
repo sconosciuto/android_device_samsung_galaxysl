@@ -242,7 +242,6 @@ private:
 			int m_gpsHour;
 			int m_gpsMin;
 			int m_gpsSec;
-			char mPreviousGPSProcessingMethod[150];
 			int mThumbnailWidth;
 			int mThumbnailHeight;
 			int mPreviousSceneMode;
@@ -270,7 +269,7 @@ extern "C" {
 int ColorConvert_Init(int , int , int);
 int ColorConvert_Deinit();
 int ColorConvert_Process(char *, char *);
-int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, int quality);
+int encodeImage(void* outputBuffer, void *inputBuffer, int width, int height, int quality, unsigned char* pExifBuf, int ExifSize, int ThumbWidth, int ThumbHeight);
 void Neon_Convert_yuv422_to_NV21(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
 void Neon_Convert_yuv422_to_NV12(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
 void Neon_Convert_yuv422_to_YUV420P(unsigned char * aSrcBufPtr, unsigned char * aDstBufPtr,unsigned int aFramewidth,unsigned int aFrameHeight);
