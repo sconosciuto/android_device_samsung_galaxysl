@@ -110,16 +110,11 @@ set_light_leds(struct light_state_t const *state)
 
     pthread_mutex_lock(&g_lock);
 
-    switch (state->flashMode) {
-    case LIGHT_FLASH_NONE:
-        err = write_int(BUTTON_FILE, LEDS_LIGHT_OFF);
-        break;
-    case LIGHT_FLASH_TIMED:
-    case LIGHT_FLASH_HARDWARE:
+    // if the color is 0, turn off the LED
+    if (state->color & 0xffffff) {
         err = write_int(BUTTON_FILE, LEDS_LIGHT_ON);
-        break;
-    default:
-        err = -EINVAL;
+    } else {
+        err = write_int(BUTTON_FILE, LEDS_LIGHT_OFF);
     }
 
     pthread_mutex_unlock(&g_lock);
